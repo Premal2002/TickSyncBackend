@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35219.272
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TickSyncAPI", "TickSyncAPI.csproj", "{0EE3F1D8-3BCB-4200-A81A-9B02F4E4893D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0EE3F1D8-3BCB-4200-A81A-9B02F4E4893D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EE3F1D8-3BCB-4200-A81A-9B02F4E4893D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EE3F1D8-3BCB-4200-A81A-9B02F4E4893D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EE3F1D8-3BCB-4200-A81A-9B02F4E4893D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {39617A6D-659A-46B1-8981-8AE93E3038EE}
+	EndGlobalSection
+EndGlobal
