@@ -9,6 +9,7 @@ using TickSyncAPI.Models;
 
 namespace TickSyncAPI.Controllers
 {
+    //Adding comment to test build pipeline and main branch policy
     [Route("api/[controller]")]
     [ApiController]
     public class MoviesController : ControllerBase
