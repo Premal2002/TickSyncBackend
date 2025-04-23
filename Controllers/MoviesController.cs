@@ -53,7 +53,7 @@ namespace TickSyncAPI.Controllers
         [HttpGet("/TMDB/Movies")]
         public async Task<ActionResult> GetMovieTMDB()
         {
-            var bearerToken = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiNmM0NDE2YjZlNDQ0YzY3ZmFkZTJiNWJhYmQxZDA0NiIsIm5iZiI6MTc0NTEzMDg0Mi41ODcwMDAxLCJzdWIiOiI2ODA0OTU1YTI3NmJmNjRlNDFhYTc2MDkiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.A4TQfcP3Na4euYSlKjLoeDgStjqk2aXZnJAixnwu4P4";
+            var bearerToken = _configuration.GetValue<string>("BearerTokenTMDB");
             var endpoint = $"https://api.themoviedb.org/3/movie/now_playing?language=en-US&page=1";
             var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
@@ -75,7 +75,7 @@ namespace TickSyncAPI.Controllers
         [HttpPost("sync-tmdb-movies")]
         public async Task<IActionResult> SyncTMDBMovies()
         {
-            var bearerToken = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiNmM0NDE2YjZlNDQ0YzY3ZmFkZTJiNWJhYmQxZDA0NiIsIm5iZiI6MTc0NTEzMDg0Mi41ODcwMDAxLCJzdWIiOiI2ODA0OTU1YTI3NmJmNjRlNDFhYTc2MDkiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.A4TQfcP3Na4euYSlKjLoeDgStjqk2aXZnJAixnwu4P4";
+            var bearerToken = _configuration.GetValue<string>("BearerTokenTMDB");
             var genreEndpoint = "https://api.themoviedb.org/3/genre/movie/list?language=en";
             var genreRequest = new HttpRequestMessage(HttpMethod.Get, genreEndpoint);
             genreRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
