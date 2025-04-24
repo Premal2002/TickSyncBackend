@@ -2,10 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Azure.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity.Data;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TickSyncAPI.Models;
+using TickSyncAPI.Interfaces;
+using TickSyncAPI.Models.Dtos;
 
 namespace TickSyncAPI.Controllers
 {
@@ -14,10 +19,14 @@ namespace TickSyncAPI.Controllers
     public class UsersController : ControllerBase
     {
         private readonly BookingSystemContext _context;
+        private readonly IUserService _userService;
+        private readonly IAuthService _authService;
 
-        public UsersController(BookingSystemContext context)
+        public UsersController(BookingSystemContext context, IUserService userService, IAuthService authService)
         {
             _context = context;
+            _userService = userService;
+            _authService = authService;
         }
 
         // GET: api/Users
@@ -72,15 +81,21 @@ namespace TickSyncAPI.Controllers
             return NoContent();
         }
 
+        [HttpPost("login")]
+        public async Task<ActionResult<string>> Login(UserLoginDto user)
+        {
+            var token = await _authService.LoginUser(user);
+            return Ok(token);
+        }
+
+
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetUser", new { id = user.UserId }, user);
+            var createdUser = await _userService.RegisterUser(user);
+            return Ok(createdUser);
         }
 
         // DELETE: api/Users/5
