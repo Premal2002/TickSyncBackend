@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ namespace TickSyncAPI.Controllers
     //Adding comment to test build pipeline and main branch policy
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles ="user,admin")]
     public class MoviesController : ControllerBase
     {
         private readonly HttpClient _httpClient;
@@ -118,7 +120,7 @@ namespace TickSyncAPI.Controllers
 
                     var movie = new Movie
                     {
-                        TMDBId = tmdbMovie.Id,
+                        Tmdbid = tmdbMovie.Id,
                         Title = tmdbMovie.Title,
                         Description = tmdbMovie.Overview,
                         Language = tmdbMovie.Original_Language,
@@ -130,7 +132,7 @@ namespace TickSyncAPI.Controllers
                     };
 
                     // Check for duplicate TMDBId
-                    var exists = await _context.Movies.AnyAsync(m => m.TMDBId == movie.TMDBId);
+                    var exists = await _context.Movies.AnyAsync(m => m.Tmdbid == movie.Tmdbid);
                     if (!exists)
                     {
                         _context.Movies.Add(movie);

@@ -14,11 +14,11 @@ namespace TickSyncAPI.Services
         }
         public async Task<User> RegisterUser(User user)
         {
-            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
 
-            return user;
+                return user;
         }
     }
 }
