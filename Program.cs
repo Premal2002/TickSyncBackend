@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
+using TickSyncAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
+builder.Services.AddTransient<IUserService,UserService>();
+builder.Services.AddTransient<IAuthService,AuthService>();
 
 // Register DbContext using the connection string from appsettings.json
 builder.Services.AddDbContext<BookingSystemContext>(options =>
