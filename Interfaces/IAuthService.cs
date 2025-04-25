@@ -5,6 +5,8 @@ namespace TickSyncAPI.Interfaces
 {
     public interface IAuthService
     {
-        public Task<string> LoginUser(UserLoginDto user);
+        public Task<TokenDto> LoginUser(UserLoginDto user);
+        Role AddRole(Role role);
+        bool AssignRoleToUser(AddUserRole obj);
     }
 }

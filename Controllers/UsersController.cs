@@ -20,13 +20,11 @@ namespace TickSyncAPI.Controllers
     {
         private readonly BookingSystemContext _context;
         private readonly IUserService _userService;
-        private readonly IAuthService _authService;
 
-        public UsersController(BookingSystemContext context, IUserService userService, IAuthService authService)
+        public UsersController(BookingSystemContext context, IUserService userService)
         {
             _context = context;
             _userService = userService;
-            _authService = authService;
         }
 
         // GET: api/Users
@@ -81,21 +79,29 @@ namespace TickSyncAPI.Controllers
             return NoContent();
         }
 
-        [HttpPost("login")]
-        public async Task<ActionResult<string>> Login(UserLoginDto user)
-        {
-            var token = await _authService.LoginUser(user);
-            return Ok(token);
-        }
-
 
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-            var createdUser = await _userService.RegisterUser(user);
-            return Ok(createdUser);
+            try
+            {
+                var createdUser = await _userService.RegisterUser(user);
+                return Ok(createdUser);
+            }
+            catch(DbUpdateException ex)
+            {
+                var message = ex.InnerException?.Message;
+
+                if (message?.Contains("UQ__Users__A9D10534D8174312") == true)
+                    return BadRequest(new { Email = "Email already exists." });
+                return BadRequest(new { message = "A database error occurred.", details = ex.Message });
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, new { message = "An error occurred.", details = ex.Message });
+            }
         }
 
         // DELETE: api/Users/5

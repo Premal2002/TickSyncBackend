@@ -5,9 +5,7 @@ namespace TickSyncAPI.Models;
 
 public partial class Movie
 {
-    public int MovieId { get; set; }         // Your own primary key (or use TMDB ID here if preferred)
-
-    public int TMDBId { get; set; }          // Store TMDB's id (e.g., 637)
+    public int MovieId { get; set; }
 
     public string Title { get; set; } = null!;
 
@@ -21,22 +19,13 @@ public partial class Movie
 
     public DateOnly? ReleaseDate { get; set; }
 
-    public string? PosterUrl { get; set; }    // From TMDB's `poster_path`
+    public int? Tmdbid { get; set; }
 
-    public string? BackdropUrl { get; set; }  // From TMDB's `backdrop_path`
+    public string? PosterUrl { get; set; }
 
-    public double? Rating { get; set; }       // From `vote_average`
+    public string? BackdropUrl { get; set; }
+
+    public double? Rating { get; set; }
 
     public virtual ICollection<Show> Shows { get; set; } = new List<Show>();
 }
-
-//USE[BookingSystem];
-//GO
-
-//ALTER TABLE[dbo].[Movies]
-//ADD
-//    [TMDBId] INT NULL,
-//    [PosterUrl] NVARCHAR(500) NULL,
-//    [BackdropUrl] NVARCHAR(500) NULL,
-//    [Rating] FLOAT NULL;
-//GO
