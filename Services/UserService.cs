@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
+using TickSyncAPI.Models.Dtos;
 
 namespace TickSyncAPI.Services
 {
@@ -12,13 +13,20 @@ namespace TickSyncAPI.Services
         {
             _context = context;
         }
-        public async Task<User> RegisterUser(User user)
+        public async Task<User> RegisterUser(UserRegisterDto userDto)
         {
-                user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
+            var passwordHash = BCrypt.Net.BCrypt.HashPassword(userDto.PasswordHash);
+            var user = new User()
+            {
+                FullName = userDto.FullName,
+                Email = userDto.Email,
+                Phone = userDto.Phone,
+                PasswordHash = passwordHash
+            };
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
 
-                return user;
+            return user;
         }
     }
 }
