@@ -83,18 +83,18 @@ namespace TickSyncAPI.Controllers
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult<User>> PostUser(UserRegisterDto userDto)
         {
             try
             {
-                var createdUser = await _userService.RegisterUser(user);
+                var createdUser = await _userService.RegisterUser(userDto);
                 return Ok(createdUser);
             }
             catch(DbUpdateException ex)
             {
                 var message = ex.InnerException?.Message;
 
-                if (message?.Contains("UQ__Users__A9D10534D8174312") == true)
+                if (message?.Contains("UQ_Users_Email") == true)
                     return BadRequest(new { Email = "Email already exists." });
                 return BadRequest(new { message = "A database error occurred.", details = ex.Message });
             }

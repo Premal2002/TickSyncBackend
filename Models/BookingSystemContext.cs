@@ -42,18 +42,13 @@ public partial class BookingSystemContext : DbContext
     public virtual DbSet<Venue> Venues { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-
-    }
-//#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-//        => optionsBuilder.UseSqlServer("Server=DESKTOP-0DTLUPK\\SQLEXPRESS;Database=BookingSystem;Trusted_Connection=True;Encrypt=False;");
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=DESKTOP-0DTLUPK\\SQLEXPRESS;Database=BookingSystem;Trusted_Connection=True;Encrypt=False;");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.HasKey(e => e.BookingId).HasName("PK__Bookings__73951AEDC0133C06");
-
             entity.Property(e => e.BookingType).HasMaxLength(50);
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -65,18 +60,16 @@ public partial class BookingSystemContext : DbContext
 
             entity.HasOne(d => d.Show).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.ShowId)
-                .HasConstraintName("FK__Bookings__ShowId__656C112C");
+                .HasConstraintName("FK_Bookings_Show");
 
             entity.HasOne(d => d.User).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Bookings__UserId__6477ECF3");
+                .HasConstraintName("FK_Bookings_User");
         });
 
         modelBuilder.Entity<Bus>(entity =>
         {
-            entity.HasKey(e => e.BusId).HasName("PK__Buses__6A0F60B5C85BB5F0");
-
             entity.Property(e => e.BusName).HasMaxLength(200);
             entity.Property(e => e.Destination).HasMaxLength(100);
             entity.Property(e => e.Source).HasMaxLength(100);
@@ -84,21 +77,17 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<Event>(entity =>
         {
-            entity.HasKey(e => e.EventId).HasName("PK__Events__7944C81068466DD0");
-
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.Name).HasMaxLength(200);
 
             entity.HasOne(d => d.Venue).WithMany(p => p.Events)
                 .HasForeignKey(d => d.VenueId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Events__VenueId__66603565");
+                .HasConstraintName("FK_Events_Venue");
         });
 
         modelBuilder.Entity<Movie>(entity =>
         {
-            entity.HasKey(e => e.MovieId).HasName("PK__Movies__4BD2941A0A912786");
-
             entity.Property(e => e.BackdropUrl).HasMaxLength(500);
             entity.Property(e => e.Description).HasMaxLength(1000);
             entity.Property(e => e.Genre).HasMaxLength(200);
@@ -110,8 +99,6 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.PaymentId).HasName("PK__Payments__9B556A380EE8DF1D");
-
             entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -122,12 +109,12 @@ public partial class BookingSystemContext : DbContext
             entity.HasOne(d => d.Booking).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.BookingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Payments__Bookin__6754599E");
+                .HasConstraintName("FK_Payments_Booking");
 
             entity.HasOne(d => d.User).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Payments__UserId__68487DD7");
+                .HasConstraintName("FK_Payments_User");
         });
 
         modelBuilder.Entity<Role>(entity =>
@@ -139,8 +126,6 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<Seat>(entity =>
         {
-            entity.HasKey(e => e.SeatId).HasName("PK__Seats__311713F376E56EE3");
-
             entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.RowNumber).HasMaxLength(10);
             entity.Property(e => e.SeatNumber).HasMaxLength(10);
@@ -151,12 +136,12 @@ public partial class BookingSystemContext : DbContext
             entity.HasOne(d => d.Venue).WithMany(p => p.Seats)
                 .HasForeignKey(d => d.VenueId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Seats__VenueId__6C190EBB");
+                .HasConstraintName("FK_Seats_Venue");
         });
 
         modelBuilder.Entity<SeatLock>(entity =>
         {
-            entity.HasKey(e => e.LockId).HasName("PK__Seat_Loc__E7C1E232C12AE8D5");
+            entity.HasKey(e => e.LockId).HasName("PK_SeatLocks");
 
             entity.ToTable("Seat_Locks");
 
@@ -169,37 +154,33 @@ public partial class BookingSystemContext : DbContext
             entity.HasOne(d => d.Seat).WithMany(p => p.SeatLocks)
                 .HasForeignKey(d => d.SeatId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Seat_Lock__SeatI__693CA210");
+                .HasConstraintName("FK_SeatLocks_Seat");
 
             entity.HasOne(d => d.Show).WithMany(p => p.SeatLocks)
                 .HasForeignKey(d => d.ShowId)
-                .HasConstraintName("FK__Seat_Lock__ShowI__6B24EA82");
+                .HasConstraintName("FK_SeatLocks_Show");
 
             entity.HasOne(d => d.User).WithMany(p => p.SeatLocks)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Seat_Lock__UserI__6A30C649");
+                .HasConstraintName("FK_SeatLocks_User");
         });
 
         modelBuilder.Entity<Show>(entity =>
         {
-            entity.HasKey(e => e.ShowId).HasName("PK__Shows__6DE3E0B2D53DBCA1");
-
             entity.HasOne(d => d.Movie).WithMany(p => p.Shows)
                 .HasForeignKey(d => d.MovieId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Shows__MovieId__6D0D32F4");
+                .HasConstraintName("FK_Shows_Movie");
 
             entity.HasOne(d => d.Venue).WithMany(p => p.Shows)
                 .HasForeignKey(d => d.VenueId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Shows__VenueId__6E01572D");
+                .HasConstraintName("FK_Shows_Venue");
         });
 
         modelBuilder.Entity<Train>(entity =>
         {
-            entity.HasKey(e => e.TrainId).HasName("PK__Trains__8ED2723A55668260");
-
             entity.Property(e => e.Destination).HasMaxLength(100);
             entity.Property(e => e.Source).HasMaxLength(100);
             entity.Property(e => e.TrainName).HasMaxLength(200);
@@ -207,11 +188,9 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__Users__1788CC4C719F45D9");
+            entity.HasIndex(e => e.Email, "UQ_Users_Email").IsUnique();
 
-            entity.HasIndex(e => e.Phone, "UQ__Users__5C7E359E6B14A6F2").IsUnique();
-
-            entity.HasIndex(e => e.Email, "UQ__Users__A9D10534D8174312").IsUnique();
+            entity.HasIndex(e => e.Phone, "UQ_Users_Phone").IsUnique();
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -239,8 +218,6 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<Venue>(entity =>
         {
-            entity.HasKey(e => e.VenueId).HasName("PK__Venues__3C57E5F2FB0F2962");
-
             entity.Property(e => e.Location).HasMaxLength(200);
             entity.Property(e => e.Name).HasMaxLength(200);
         });
