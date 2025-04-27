@@ -20,8 +20,14 @@ namespace TickSyncAPI.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(UserLoginDto user)
         {
-            var token = await _authService.LoginUser(user);
-            return Ok(token);
+            try
+            {
+                var token = await _authService.LoginUser(user);
+                return Ok(token);
+            }catch(Exception ex)
+            {
+                return Unauthorized(ex.Message);
+            }
         }
 
         [HttpPost("assignRole")]
