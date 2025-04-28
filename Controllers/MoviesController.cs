@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TickSyncAPI.Models;
-using TickSyncAPI.Models.Dtos;
 
 namespace TickSyncAPI.Controllers
 {
@@ -207,53 +206,6 @@ namespace TickSyncAPI.Controllers
 
             return Ok("Movie Popularities updated successfully.");
         }
-
-        //to sync all the laguages in language table from tmdb language endpoint
-        [HttpPost("sync-tmdb-languages")]
-        public async Task<IActionResult> SyncTMDBLanguages()
-        {
-            var bearerToken = _configuration.GetValue<string>("BearerTokenTMDB");
-            var endpoint = "https://api.themoviedb.org/3/configuration/languages";
-
-            var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
-
-            var response = await _httpClient.SendAsync(request);
-            if (!response.IsSuccessStatusCode)
-            {
-                return StatusCode((int)response.StatusCode, "Error fetching languages from TMDB");
-            }
-
-            var json = await response.Content.ReadAsStringAsync();
-            var tmdbLanguages = JsonSerializer.Deserialize<List<TmdbLanguageDto>>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            foreach (var tmdbLanguage in tmdbLanguages)
-            {
-                // Check if already exists
-                var exists = await _context.Languages
-                    .AnyAsync(l => l.IsoCode == tmdbLanguage.Iso_639_1);
-
-                if (!exists)
-                {
-                    var language = new Language
-                    {
-                        IsoCode = tmdbLanguage.Iso_639_1,
-                        EnglishName = tmdbLanguage.English_Name,
-                        NativeName = tmdbLanguage.Name
-                    };
-
-                    _context.Languages.Add(language);
-                }
-            }
-
-            await _context.SaveChangesAsync();
-
-            return Ok("Languages synced successfully.");
-        }
-
 
         // PUT: api/Movies/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
