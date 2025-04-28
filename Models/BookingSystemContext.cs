@@ -21,6 +21,8 @@ public partial class BookingSystemContext : DbContext
 
     public virtual DbSet<Event> Events { get; set; }
 
+    public virtual DbSet<Language> Languages { get; set; }
+
     public virtual DbSet<Movie> Movies { get; set; }
 
     public virtual DbSet<Payment> Payments { get; set; }
@@ -81,6 +83,15 @@ public partial class BookingSystemContext : DbContext
                 .HasForeignKey(d => d.VenueId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Events_Venue");
+        });
+
+        modelBuilder.Entity<Language>(entity =>
+        {
+            entity.HasKey(e => e.LanguageId).HasName("PK__Language__B93855AB39201F31");
+
+            entity.Property(e => e.EnglishName).HasMaxLength(200);
+            entity.Property(e => e.IsoCode).HasMaxLength(10);
+            entity.Property(e => e.NativeName).HasMaxLength(200);
         });
 
         modelBuilder.Entity<Movie>(entity =>

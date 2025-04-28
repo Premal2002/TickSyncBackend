@@ -19,6 +19,8 @@ public partial class Movie
 
     public DateOnly? ReleaseDate { get; set; }
 
+    public double? Popularity { get; set; }
+
     public int? Tmdbid { get; set; }
 
     public string? PosterUrl { get; set; }

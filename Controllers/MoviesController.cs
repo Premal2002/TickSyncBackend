@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TickSyncAPI.Models;
+using TickSyncAPI.Models.Dtos;
 
 namespace TickSyncAPI.Controllers
 {
@@ -36,6 +37,27 @@ namespace TickSyncAPI.Controllers
         public async Task<ActionResult<IEnumerable<Movie>>> GetMovies()
         {
             return await _context.Movies.ToListAsync();
+        }
+        
+        // GET: api/Movies/Trending - based on popularity
+        [HttpGet("/Trending")]
+        public async Task<ActionResult<IEnumerable<Movie>>> GetTrendingMovies()
+        {
+            return await _context.Movies
+                                 .OrderByDescending(m => m.Popularity)
+                                 .Take(10)
+                                 .ToListAsync();
+        }
+
+        // GET: api/Movies/Trending - based on rating and release date
+        [HttpGet("/Recommended")]
+        public async Task<ActionResult<IEnumerable<Movie>>> GetRecommendedMovies()
+        {
+            return await _context.Movies
+                                 .Where(m => m.Rating != null && m.Rating >= 7.0)  // Only highly rated movies
+                                 .OrderByDescending(m => m.ReleaseDate)
+                                 .Take(10)
+                                 .ToListAsync();
         }
 
         // GET: api/Movies/5
@@ -143,6 +165,93 @@ namespace TickSyncAPI.Controllers
             }
 
             return Ok("TMDB movies synced successfully.");
+        }
+
+        //To upadae movies table to add popularity column and values from TMDB 
+        [HttpPost("update-tmdb-popularity")]
+        public async Task<IActionResult> UpdateTMDBPopularity()
+        {
+            var bearerToken = _configuration.GetValue<string>("BearerTokenTMDB");
+
+            for (int page = 1; page <= 5; page++)
+            {
+                var endpoint = $"https://api.themoviedb.org/3/movie/now_playing?language=en-US&page={page}";
+                var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    continue; // skip this page if it fails
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var tmdbData = JsonSerializer.Deserialize<TmdbResponse>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                foreach (var tmdbMovie in tmdbData.results)
+                {
+                    // Find movie by TMDBId
+                    var existingMovie = await _context.Movies.FirstOrDefaultAsync(m => m.Tmdbid == tmdbMovie.Id);
+
+                    if (existingMovie != null)
+                    {
+                        existingMovie.Popularity = tmdbMovie.Popularity;  // ✅ Only update Popularity field
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok("Movie Popularities updated successfully.");
+        }
+
+        //to sync all the laguages in language table from tmdb language endpoint
+        [HttpPost("sync-tmdb-languages")]
+        public async Task<IActionResult> SyncTMDBLanguages()
+        {
+            var bearerToken = _configuration.GetValue<string>("BearerTokenTMDB");
+            var endpoint = "https://api.themoviedb.org/3/configuration/languages";
+
+            var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+
+            var response = await _httpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                return StatusCode((int)response.StatusCode, "Error fetching languages from TMDB");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            var tmdbLanguages = JsonSerializer.Deserialize<List<TmdbLanguageDto>>(json, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            foreach (var tmdbLanguage in tmdbLanguages)
+            {
+                // Check if already exists
+                var exists = await _context.Languages
+                    .AnyAsync(l => l.IsoCode == tmdbLanguage.Iso_639_1);
+
+                if (!exists)
+                {
+                    var language = new Language
+                    {
+                        IsoCode = tmdbLanguage.Iso_639_1,
+                        EnglishName = tmdbLanguage.English_Name,
+                        NativeName = tmdbLanguage.Name
+                    };
+
+                    _context.Languages.Add(language);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok("Languages synced successfully.");
         }
 
 
