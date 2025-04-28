@@ -37,6 +37,27 @@ namespace TickSyncAPI.Controllers
         {
             return await _context.Movies.ToListAsync();
         }
+        
+        // GET: api/Movies/Trending - based on popularity
+        [HttpGet("/Trending")]
+        public async Task<ActionResult<IEnumerable<Movie>>> GetTrendingMovies()
+        {
+            return await _context.Movies
+                                 .OrderByDescending(m => m.Popularity)
+                                 .Take(10)
+                                 .ToListAsync();
+        }
+
+        // GET: api/Movies/Trending - based on rating and release date
+        [HttpGet("/Recommended")]
+        public async Task<ActionResult<IEnumerable<Movie>>> GetRecommendedMovies()
+        {
+            return await _context.Movies
+                                 .Where(m => m.Rating != null && m.Rating >= 7.0)  // Only highly rated movies
+                                 .OrderByDescending(m => m.ReleaseDate)
+                                 .Take(10)
+                                 .ToListAsync();
+        }
 
         // GET: api/Movies/5
         [HttpGet("{id}")]
@@ -145,6 +166,46 @@ namespace TickSyncAPI.Controllers
             return Ok("TMDB movies synced successfully.");
         }
 
+        //To upadae movies table to add popularity column and values from TMDB 
+        [HttpPost("update-tmdb-popularity")]
+        public async Task<IActionResult> UpdateTMDBPopularity()
+        {
+            var bearerToken = _configuration.GetValue<string>("BearerTokenTMDB");
+
+            for (int page = 1; page <= 5; page++)
+            {
+                var endpoint = $"https://api.themoviedb.org/3/movie/now_playing?language=en-US&page={page}";
+                var request = new HttpRequestMessage(HttpMethod.Get, endpoint);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+
+                var response = await _httpClient.SendAsync(request);
+                if (!response.IsSuccessStatusCode)
+                {
+                    continue; // skip this page if it fails
+                }
+
+                var json = await response.Content.ReadAsStringAsync();
+                var tmdbData = JsonSerializer.Deserialize<TmdbResponse>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                foreach (var tmdbMovie in tmdbData.results)
+                {
+                    // Find movie by TMDBId
+                    var existingMovie = await _context.Movies.FirstOrDefaultAsync(m => m.Tmdbid == tmdbMovie.Id);
+
+                    if (existingMovie != null)
+                    {
+                        existingMovie.Popularity = tmdbMovie.Popularity;  // ✅ Only update Popularity field
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+            }
+
+            return Ok("Movie Popularities updated successfully.");
+        }
 
         // PUT: api/Movies/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754

@@ -11,6 +11,7 @@
         public string Release_Date { get; set; }
         public List<int> Genre_Ids { get; set; }
         public double Vote_Average { get; set; }
+        public double Popularity { get; set; }
     }
 
     public class TmdbResponse

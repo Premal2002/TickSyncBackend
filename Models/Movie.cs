@@ -27,5 +27,7 @@ public partial class Movie
 
     public double? Rating { get; set; }
 
+    public double? Popularity { get; set; }
+
     public virtual ICollection<Show> Shows { get; set; } = new List<Show>();
 }
