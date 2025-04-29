@@ -95,12 +95,12 @@ namespace TickSyncAPI.Controllers
                 var message = ex.InnerException?.Message;
 
                 if (message?.Contains("UQ_Users_Email") == true)
-                    return BadRequest(new { Email = "Email already exists." });
-                return BadRequest(new { message = "A database error occurred.", details = ex.Message });
+                    return BadRequest("Email already exists.");
+                return BadRequest(ex.Message );
             }
             catch(Exception ex)
             {
-                return StatusCode(500, new { message = "An error occurred.", details = ex.Message });
+                return StatusCode(500, ex.Message );
             }
         }
 

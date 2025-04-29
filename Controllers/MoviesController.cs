@@ -33,10 +33,27 @@ namespace TickSyncAPI.Controllers
         }
 
         // GET: api/Movies
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Movie>>> GetMovies()
+        [HttpPost("getMovies")]
+        public async Task<ActionResult<List<Movie>>> GetMovies(MoviesFilter filter = null)
         {
-            return await _context.Movies.ToListAsync();
+            List<Movie> filteredMovies = await _context.Movies.ToListAsync();
+            if (filter != null)
+            {
+                if (filter.Languages != null && filter.Languages.Count > 0)
+                {
+                    filteredMovies = filteredMovies.Where(m => filter.Languages.Contains(m.Language)).ToList();
+                }
+                    
+                if (filter.Genres != null && filter.Genres.Count > 0)
+                {
+                    //filteredMovies = filteredMovies.Where(m => !string.IsNullOrEmpty(m.Genre) &&
+                    //                          m.Genre.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
+                    //                           .Any(g => filter.Genres.Contains(g))).ToList();
+                    //Above one is slower approach 
+                    filteredMovies = filteredMovies.Where(m => filter.Genres.Any(g => m.Genre.Contains(g))).ToList();
+                }
+            }
+            return filteredMovies;
         }
         
         // GET: api/Movies/Trending - based on popularity
@@ -57,6 +74,16 @@ namespace TickSyncAPI.Controllers
                                  .Where(m => m.Rating != null && m.Rating >= 7.0)  // Only highly rated movies
                                  .OrderByDescending(m => m.ReleaseDate)
                                  .Take(10)
+                                 .ToListAsync();
+        }
+
+        // GET: api/Movies/Trending - based on popularity
+        [HttpGet("/getMovieShows/${movieId}")]
+        public async Task<ActionResult<IEnumerable<IGrouping<int, Show>>>> GetMovieShows(int movieId)
+        {
+            return await _context.Shows
+                                 .Where(s => s.MovieId == movieId && s.ShowDate >= DateOnly.FromDateTime(DateTime.Now))
+                                 .GroupBy(s => s.VenueId)
                                  .ToListAsync();
         }
 
