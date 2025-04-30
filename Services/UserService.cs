@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using TickSyncAPI.Interfaces;
+﻿using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
 using TickSyncAPI.Models.Dtos;
 

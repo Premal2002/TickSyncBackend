@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
 using TickSyncAPI.Models.Dtos;
