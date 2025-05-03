@@ -90,7 +90,9 @@ namespace TickSyncAPI.Services
                         var tokenDto = new TokenDto()
                         {
                             JwtToken = jwtToken,
-                            UserId = user.UserId
+                            UserId = user.UserId,
+                            FullName = user.FullName,
+                            Email = user.Email
                         };
 
                         return tokenDto;
