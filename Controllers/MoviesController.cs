@@ -11,7 +11,7 @@ namespace TickSyncAPI.Controllers
     //Adding comment to test build pipeline and main branch policy
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles ="user,admin")]
+    //[Authorize(Roles ="user,admin")]
     public class MoviesController : ControllerBase
     {
         private readonly BookingSystemContext _context;
@@ -48,7 +48,7 @@ namespace TickSyncAPI.Controllers
         }
         
         // GET: api/Movies/Trending - based on popularity
-        [HttpGet("/Trending")]
+        [HttpGet("Trending")]
         public async Task<ActionResult<IEnumerable<Movie>>> GetTrendingMovies()
         {
             return await _context.Movies
@@ -58,7 +58,7 @@ namespace TickSyncAPI.Controllers
         }
 
         // GET: api/Movies/Trending - based on rating and release date
-        [HttpGet("/Recommended")]
+        [HttpGet("Recommended")]
         public async Task<ActionResult<IEnumerable<Movie>>> GetRecommendedMovies()
         {
             return await _context.Movies
@@ -69,7 +69,7 @@ namespace TickSyncAPI.Controllers
         }
 
         // GET: api/Movies/getMovieShows/${movieId} - To get all the upcoming shows of a movie 
-        [HttpGet("/getMovieShows/${movieId}")]
+        [HttpGet("getMovieShows/${movieId}")]
         public async Task<ActionResult<IEnumerable<IGrouping<int, Show>>>> GetMovieShows(int movieId)
         {
             return await _context.Shows
@@ -92,7 +92,7 @@ namespace TickSyncAPI.Controllers
             return movie;
         }
 
-        [HttpGet("/TMDB/Movies")]
+        [HttpGet("TMDB/Movies")]
         public async Task<ActionResult> GetMovieTMDB()
         {
             try
