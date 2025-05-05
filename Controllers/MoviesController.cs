@@ -68,6 +68,15 @@ namespace TickSyncAPI.Controllers
                                  .ToListAsync();
         }
 
+        // GET: api/Movies/getRelatedMovies - get related similar movies based on a movie
+        [HttpPost("getRelatedMovies")]
+        public async Task<ActionResult<IEnumerable<Movie>>> GetRelatedMovies(Movie movie)
+        {
+            return await _context.Movies
+                                 .Where(m => m.MovieId != movie.MovieId && (m.Language == movie.Language && m.Genre.Contains(movie.Genre)))
+                                 .ToListAsync();
+        }
+
         // GET: api/Movies/getMovieShows/${movieId} - To get all the upcoming shows of a movie 
         [HttpGet("getMovieShows/${movieId}")]
         public async Task<ActionResult<IEnumerable<IGrouping<int, Show>>>> GetMovieShows(int movieId)
