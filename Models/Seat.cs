@@ -9,15 +9,13 @@ public partial class Seat
 
     public int VenueId { get; set; }
 
-    public string? RowNumber { get; set; }
+    public string RowNumber { get; set; } = null!;
 
-    public string? SeatNumber { get; set; }
+    public string SeatNumber { get; set; } = null!;
 
-    public decimal? Price { get; set; }
+    public string SeatType { get; set; } = null!;
 
     public string? Status { get; set; }
-
-    public virtual ICollection<SeatLock> SeatLocks { get; set; } = new List<SeatLock>();
 
     public virtual Venue Venue { get; set; } = null!;
 }

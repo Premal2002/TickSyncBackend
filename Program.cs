@@ -25,6 +25,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddTransient<IUserService,UserService>();
 builder.Services.AddTransient<IAuthService,AuthService>();
 builder.Services.AddTransient<ITmbdService,TmdbService>();
+builder.Services.AddTransient<IEmailService,EmailService>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
     options.RequireHttpsMetadata = false;

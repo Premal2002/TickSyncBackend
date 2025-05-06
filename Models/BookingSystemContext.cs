@@ -25,13 +25,13 @@ public partial class BookingSystemContext : DbContext
 
     public virtual DbSet<Movie> Movies { get; set; }
 
+    public virtual DbSet<PasswordResetRequest> PasswordResetRequests { get; set; }
+
     public virtual DbSet<Payment> Payments { get; set; }
 
     public virtual DbSet<Role> Roles { get; set; }
 
     public virtual DbSet<Seat> Seats { get; set; }
-
-    public virtual DbSet<SeatLock> SeatLocks { get; set; }
 
     public virtual DbSet<Show> Shows { get; set; }
 
@@ -105,6 +105,18 @@ public partial class BookingSystemContext : DbContext
             entity.Property(e => e.Tmdbid).HasColumnName("TMDBId");
         });
 
+        modelBuilder.Entity<PasswordResetRequest>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Password__3214EC072564DF2F");
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.Email).HasMaxLength(256);
+            entity.Property(e => e.ExpiresAt).HasColumnType("datetime");
+            entity.Property(e => e.SecretCode).HasMaxLength(20);
+        });
+
         modelBuilder.Entity<Payment>(entity =>
         {
             entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
@@ -134,9 +146,11 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<Seat>(entity =>
         {
-            entity.Property(e => e.Price).HasColumnType("decimal(10, 2)");
+            entity.HasIndex(e => new { e.VenueId, e.RowNumber, e.SeatNumber }, "UQ_Seat_RowSeat").IsUnique();
+
             entity.Property(e => e.RowNumber).HasMaxLength(10);
             entity.Property(e => e.SeatNumber).HasMaxLength(10);
+            entity.Property(e => e.SeatType).HasMaxLength(50);
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasDefaultValue("Available");
@@ -147,35 +161,11 @@ public partial class BookingSystemContext : DbContext
                 .HasConstraintName("FK_Seats_Venue");
         });
 
-        modelBuilder.Entity<SeatLock>(entity =>
-        {
-            entity.HasKey(e => e.LockId).HasName("PK_SeatLocks");
-
-            entity.ToTable("Seat_Locks");
-
-            entity.Property(e => e.BookingType).HasMaxLength(50);
-            entity.Property(e => e.ExpiryTime).HasColumnType("datetime");
-            entity.Property(e => e.LockedAt)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime");
-
-            entity.HasOne(d => d.Seat).WithMany(p => p.SeatLocks)
-                .HasForeignKey(d => d.SeatId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_SeatLocks_Seat");
-
-            entity.HasOne(d => d.Show).WithMany(p => p.SeatLocks)
-                .HasForeignKey(d => d.ShowId)
-                .HasConstraintName("FK_SeatLocks_Show");
-
-            entity.HasOne(d => d.User).WithMany(p => p.SeatLocks)
-                .HasForeignKey(d => d.UserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_SeatLocks_User");
-        });
-
         modelBuilder.Entity<Show>(entity =>
         {
+            entity.Property(e => e.PremiumSeatPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.RegularSeatPrice).HasColumnType("decimal(10, 2)");
+
             entity.HasOne(d => d.Movie).WithMany(p => p.Shows)
                 .HasForeignKey(d => d.MovieId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
