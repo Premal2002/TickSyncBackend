@@ -4,21 +4,24 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NuGet.Packaging;
+using TickSyncAPI.HelperClasses;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
 using TickSyncAPI.Models.Dtos;
 
 namespace TickSyncAPI.Services
 {
-    public class AuthService : IAuthService
+    public class AuthService : IAuthService 
     {
         private readonly BookingSystemContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IEmailService _emailService;
 
-        public AuthService(BookingSystemContext context, IConfiguration configuration)
+        public AuthService(BookingSystemContext context, IConfiguration configuration, IEmailService emailService)
         {
             _context = context;
             _configuration = configuration;
+            _emailService = emailService;
         }
 
         public Role AddRole(Role role)
@@ -54,6 +57,45 @@ namespace TickSyncAPI.Services
 
         }
 
+        public async Task<string> ForgotPassword(ForgotPasswordRequest forgotPasswordRequest)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == forgotPasswordRequest.Email);
+
+            if (user == null)
+                return "If the email is registered, you'll receive a reset code.";
+
+            var code = new Random().Next(100000, 999999).ToString();
+
+            var resetRequest = new PasswordResetRequest
+            {
+                Email = forgotPasswordRequest.Email,
+                SecretCode = code,
+                ExpiresAt = DateTime.Now.AddMinutes(10),
+                IsUsed = false
+            };
+            var rowsToRemove = await _context.PasswordResetRequests.Where(p => p.Email == forgotPasswordRequest.Email).ToListAsync();
+            _context.PasswordResetRequests.RemoveRange(rowsToRemove);
+            _context.PasswordResetRequests.Add(resetRequest);
+            await _context.SaveChangesAsync();
+
+            // TODO: Send the code via email
+            string subject = "Your Password Reset Code";
+            string body = $@"
+                            <html>
+                                <body style='font-family: Arial, sans-serif;'>
+                                    <p>Hello,</p>
+                                    <p>Your password reset code is:</p>
+                                    <h2 style='color:#2e6c80;'>{code}</h2>
+                                    <p>This code will expire in 10 minutes.</p>
+                                    <p>If you didn’t request a reset, please ignore this email.</p>
+                                    <br/>
+                                    <p>Thanks,<br/>TickSync Team</p>
+                                </body>
+                            </html>";
+            await _emailService.SendEmail(forgotPasswordRequest.Email, subject, body);
+
+            return "If the email is registered, you'll receive a reset code.";
+        }
         public async Task<TokenDto> LoginUser(UserLoginDto userDto)
         {
             if (userDto.Email != null && userDto.Password != null)
@@ -111,7 +153,41 @@ namespace TickSyncAPI.Services
             {
                 throw new Exception("credentials are not valid!");
             }
+        }
 
+        public async Task<string> ResetPassword(ResetPasswordRequest request)
+        {
+            if (request.NewPassword != request.ConfirmPassword)
+                throw new CustomException(400, "Passwords do not match.");
+
+            var resetRecord = await _context.PasswordResetRequests
+                .Where(r => r.Email == request.Email && r.SecretCode == request.SecretCode && !r.IsUsed && r.ExpiresAt > DateTime.Now)
+                .FirstOrDefaultAsync();
+
+            if (resetRecord == null)
+                throw new CustomException(400, "Invalid or expired code.");
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            if (user == null)
+                throw new CustomException(400, "User not found.");
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            resetRecord.IsUsed = true;
+
+            await _context.SaveChangesAsync();
+            return "Password Reset Successful";
+        }
+        public async Task<bool> VerifyResetCode(VerifyResetCodeRequest verifyResetCodeRequest)
+        {
+            var record = await _context.PasswordResetRequests
+                .Where(r => r.Email == verifyResetCodeRequest.Email && !r.IsUsed && r.ExpiresAt > DateTime.Now)
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (record == null || record.SecretCode != verifyResetCodeRequest.SecretCode)
+                throw new CustomException(400, "Invalid or expired reset code.");
+
+            return true;
         }
     }
 }

@@ -21,7 +21,5 @@ public partial class User
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
-    public virtual ICollection<SeatLock> SeatLocks { get; set; } = new List<SeatLock>();
-
     public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
 }

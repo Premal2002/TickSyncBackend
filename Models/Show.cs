@@ -15,11 +15,13 @@ public partial class Show
 
     public TimeOnly ShowTime { get; set; }
 
+    public decimal RegularSeatPrice { get; set; }
+
+    public decimal PremiumSeatPrice { get; set; }
+
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
     public virtual Movie Movie { get; set; } = null!;
-
-    public virtual ICollection<SeatLock> SeatLocks { get; set; } = new List<SeatLock>();
 
     public virtual Venue Venue { get; set; } = null!;
 }
