@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using TickSyncAPI.Models;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models.Dtos;
+using TickSyncAPI.HelperClasses;
 
 namespace TickSyncAPI.Controllers
 {
@@ -115,6 +116,24 @@ namespace TickSyncAPI.Controllers
         private bool UserExists(int id)
         {
             return _context.Users.Any(e => e.UserId == id);
+        }
+
+        [HttpGet("layout/{showId}")]
+        public async Task<ActionResult<ShowSeatLayoutDto>> GetSeatLayout(int showId)
+        {
+            try
+            {
+                var result = await _userService.GetShowSeatLayout(showId);
+                return result;
+            }
+            catch (CustomException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
         }
     }
 }

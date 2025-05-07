@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TickSyncAPI.HelperClasses;
@@ -69,22 +70,36 @@ namespace TickSyncAPI.Controllers
         }
 
         // GET: api/Movies/getRelatedMovies - get related similar movies based on a movie
-        [HttpPost("getRelatedMovies")]
-        public async Task<ActionResult<IEnumerable<Movie>>> GetRelatedMovies(Movie movie)
+        [HttpPost("getRelatedMovies/{movieId}")]
+        public async Task<ActionResult<IEnumerable<Movie>>> GetRelatedMovies(int movieId)
         {
+            var movie = await _context.Movies.FirstOrDefaultAsync(m => m.MovieId == movieId);
             return await _context.Movies
                                  .Where(m => m.MovieId != movie.MovieId && (m.Language == movie.Language && m.Genre.Contains(movie.Genre)))
                                  .ToListAsync();
         }
 
         // GET: api/Movies/getMovieShows/${movieId} - To get all the upcoming shows of a movie 
-        [HttpGet("getMovieShows/${movieId}")]
-        public async Task<ActionResult<IEnumerable<IGrouping<int, Show>>>> GetMovieShows(int movieId)
+        [HttpGet("getMovieShows/{movieId}")]
+        public async Task<ActionResult<IEnumerable<ShowVenueGroup>>> GetMovieShows(int movieId)
         {
-            return await _context.Shows
-                                 .Where(s => s.MovieId == movieId && s.ShowDate >= DateOnly.FromDateTime(DateTime.Now))
-                                 .GroupBy(s => s.VenueId)
-                                 .ToListAsync();
+            var shows = await _context.Shows
+                                      .Where(s => s.MovieId == movieId && s.ShowDate >= DateOnly.FromDateTime(DateTime.Now))
+                                      .Include(s => s.Venue)
+                                      .ToListAsync();
+
+            var grouped = shows
+                .GroupBy(s => s.VenueId)
+                .Select(g => new ShowVenueGroup
+                {
+                    VenueId = g.Key,
+                    Name = g.First().Venue.Name,
+                    Location = g.First().Venue.Location,
+                    Shows = g.ToList()
+                })
+                .ToList();                
+
+            return grouped;
         }
 
         // GET: api/Movies/5
