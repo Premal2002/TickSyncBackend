@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace TickSyncAPI.Models;
 
@@ -17,5 +18,6 @@ public partial class Venue
 
     public virtual ICollection<Seat> Seats { get; set; } = new List<Seat>();
 
+    [JsonIgnore]
     public virtual ICollection<Show> Shows { get; set; } = new List<Show>();
 }
