@@ -26,28 +26,39 @@ namespace TickSyncAPI.Controllers
 
         // GET: api/Movies
         [HttpPost("getMovies")]
-        public async Task<ActionResult<List<Movie>>> GetMovies(MoviesFilter filter = null)
+        public async Task<ActionResult<object>> GetMovies([FromBody] MoviesFilter filter)
         {
-            List<Movie> filteredMovies = await _context.Movies.ToListAsync();
-            if (filter != null)
+            var query = _context.Movies.AsQueryable();
+
+            // Filter by language
+            if (filter.Languages != null && filter.Languages.Count > 0)
             {
-                if (filter.Languages != null && filter.Languages.Count > 0)
-                {
-                    filteredMovies = filteredMovies.Where(m => filter.Languages.Contains(m.Language)).ToList();
-                }
-                    
-                if (filter.Genres != null && filter.Genres.Count > 0)
-                {
-                    //filteredMovies = filteredMovies.Where(m => !string.IsNullOrEmpty(m.Genre) &&
-                    //                          m.Genre.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries)
-                    //                           .Any(g => filter.Genres.Contains(g))).ToList();
-                    //Above one is slower approach 
-                    filteredMovies = filteredMovies.Where(m => filter.Genres.Any(g => m.Genre.Contains(g))).ToList();
-                }
+                query = query.Where(m => filter.Languages.Contains(m.Language));
             }
-            return filteredMovies;
+
+            // Filter by genre
+            if (filter.Genres != null && filter.Genres.Count > 0)
+            {
+                query = query.Where(m => filter.Genres.Any(g => m.Genre.Contains(g)));
+            }
+
+            // Get total count before pagination
+            int totalMovies = await query.CountAsync();
+
+            // Apply pagination
+            var movies = await query
+                .Skip((filter.Page - 1) * filter.Limit)
+                .Take(filter.Limit)
+                .ToListAsync();
+
+            return Ok(new
+            {
+                movies,
+                total = totalMovies
+            });
         }
-        
+
+
         // GET: api/Movies/Trending - based on popularity
         [HttpGet("Trending")]
         public async Task<ActionResult<IEnumerable<Movie>>> GetTrendingMovies()
