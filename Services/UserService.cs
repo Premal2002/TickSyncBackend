@@ -37,7 +37,7 @@ namespace TickSyncAPI.Services
                             {
                                 RowNumber = rowGroup.Key,
                                 SeatType = seatTypeGroup.Key,
-                                Price = rowGroup.Key == "Premium" ? show.PremiumSeatPrice : show.RegularSeatPrice,
+                                Price = rowGroup.First().SeatType == "Premium" ? show.PremiumSeatPrice : show.RegularSeatPrice,
                                 Seats = rowGroup
                                     .OrderBy(seat => seat.SeatNumber)
                                     .Select(seat => new SeatDto
