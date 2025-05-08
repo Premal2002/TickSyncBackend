@@ -4,6 +4,7 @@ using TickSyncAPI.Models;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models.Dtos;
 using TickSyncAPI.HelperClasses;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace TickSyncAPI.Controllers
 {
@@ -13,11 +14,12 @@ namespace TickSyncAPI.Controllers
     {
         private readonly BookingSystemContext _context;
         private readonly IUserService _userService;
-
-        public UsersController(BookingSystemContext context, IUserService userService)
+        private readonly IMemoryCache _memoryCache;
+        public UsersController(BookingSystemContext context, IUserService userService, IMemoryCache memoryCache)
         {
             _context = context;
             _userService = userService;
+            _memoryCache = memoryCache;
         }
 
         // GET: api/Users
@@ -135,5 +137,39 @@ namespace TickSyncAPI.Controllers
                 return StatusCode(500, "An unexpected error occurred: " + ex.Message);
             }
         }
+
+        [HttpPost("lock")]
+        public IActionResult LockSeats([FromBody] SeatLockRequest request)
+        {
+            foreach (var seatId in request.SeatIds)
+            {
+                string cacheKey = $"seat_lock:{request.ShowId}:{seatId}";
+
+                if (_memoryCache.TryGetValue<SeatLockInfo>(cacheKey, out var existingLock))
+                {
+                    if (existingLock.ExpiresAt > DateTime.UtcNow)
+                    {
+                        return Conflict($"Seat {seatId} is already locked.");
+                    }
+                }
+
+                var lockInfo = new SeatLockInfo
+                {
+                    UserId = request.UserId,
+                    LockedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(10)
+                };
+
+                _memoryCache.Set(cacheKey, lockInfo, TimeSpan.FromMinutes(10));
+            }
+
+            return Ok(new
+            {
+                Message = "Seats locked successfully.",
+                LockedSeats = request.SeatIds
+            });
+        } 
+        
+
     }
 }
