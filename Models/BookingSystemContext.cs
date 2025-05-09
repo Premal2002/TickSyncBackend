@@ -17,6 +17,8 @@ public partial class BookingSystemContext : DbContext
 
     public virtual DbSet<Booking> Bookings { get; set; }
 
+    public virtual DbSet<BookingSeat> BookingSeats { get; set; }
+
     public virtual DbSet<Bus> Buses { get; set; }
 
     public virtual DbSet<Event> Events { get; set; }
@@ -65,6 +67,27 @@ public partial class BookingSystemContext : DbContext
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Bookings_User");
+        });
+
+        modelBuilder.Entity<BookingSeat>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__BookingS__3214EC07C994E006");
+
+            entity.HasIndex(e => new { e.SeatId, e.BookingId }, "UQ_Seat_Per_Show").IsUnique();
+
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+
+            entity.HasOne(d => d.Booking).WithMany(p => p.BookingSeats)
+                .HasForeignKey(d => d.BookingId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BookingSeats_Bookings");
+
+            entity.HasOne(d => d.Seat).WithMany(p => p.BookingSeats)
+                .HasForeignKey(d => d.SeatId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_BookingSeats_Seats");
         });
 
         modelBuilder.Entity<Bus>(entity =>

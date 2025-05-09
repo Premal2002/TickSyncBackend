@@ -21,6 +21,8 @@ public partial class Booking
 
     public DateTime? CreatedAt { get; set; }
 
+    public virtual ICollection<BookingSeat> BookingSeats { get; set; } = new List<BookingSeat>();
+
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
     public virtual Show? Show { get; set; }
