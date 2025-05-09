@@ -17,5 +17,7 @@ public partial class Seat
 
     public string? Status { get; set; }
 
+    public virtual ICollection<BookingSeat> BookingSeats { get; set; } = new List<BookingSeat>();
+
     public virtual Venue Venue { get; set; } = null!;
 }

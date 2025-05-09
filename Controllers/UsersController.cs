@@ -14,12 +14,10 @@ namespace TickSyncAPI.Controllers
     {
         private readonly BookingSystemContext _context;
         private readonly IUserService _userService;
-        private readonly IMemoryCache _memoryCache;
-        public UsersController(BookingSystemContext context, IUserService userService, IMemoryCache memoryCache)
+        public UsersController(BookingSystemContext context, IUserService userService)
         {
             _context = context;
             _userService = userService;
-            _memoryCache = memoryCache;
         }
 
         // GET: api/Users
@@ -139,37 +137,75 @@ namespace TickSyncAPI.Controllers
         }
 
         [HttpPost("lock")]
-        public IActionResult LockSeats([FromBody] SeatLockRequest request)
+        public async Task<IActionResult> LockSeats([FromBody] SeatLockRequest request)
         {
-            foreach (var seatId in request.SeatIds)
+            try
             {
-                string cacheKey = $"seat_lock:{request.ShowId}:{seatId}";
-
-                if (_memoryCache.TryGetValue<SeatLockInfo>(cacheKey, out var existingLock))
-                {
-                    if (existingLock.ExpiresAt > DateTime.UtcNow)
-                    {
-                        return Conflict($"Seat {seatId} is already locked.");
-                    }
-                }
-
-                var lockInfo = new SeatLockInfo
-                {
-                    UserId = request.UserId,
-                    LockedAt = DateTime.UtcNow,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(10)
-                };
-
-                _memoryCache.Set(cacheKey, lockInfo, TimeSpan.FromMinutes(10));
+                var result = await _userService.LockSeatsInCache(request);
+                return Ok(result);
             }
-
-            return Ok(new
+            catch (CustomException ex)
             {
-                Message = "Seats locked successfully.",
-                LockedSeats = request.SeatIds
-            });
-        } 
-        
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
+        }
 
+        [HttpGet("availability")]
+        public async Task<IActionResult> GetSeatAvailability(int showId)
+        {
+            try
+            {
+                var result = await _userService.GetSeatAvailability(showId);
+                return Ok(result);
+            }
+            catch (CustomException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
+        }
+
+        [HttpPost("initiate")]
+        public async Task<ActionResult<InitiateBookingResponse>> InitiateBooking([FromBody] InitiateBookingRequest request)
+        {
+            try
+            {
+                var result = await _userService.InitiateBooking(request);
+                return Ok(result);
+            }
+            catch (CustomException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
+        }
+
+        [HttpPost("confirm")]
+        public async Task<ActionResult> ConfirmBooking([FromBody] ConfirmBookingRequest request)
+        {
+            try
+            {
+                var result = await _userService.ConfirmBooking(request);
+                return Ok(result);
+            }
+            catch (CustomException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
+        }
     }
 }
