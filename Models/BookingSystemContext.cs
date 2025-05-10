@@ -71,7 +71,7 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<BookingSeat>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__BookingS__3214EC07C994E006");
+            entity.HasKey(e => e.Id).HasName("PK__BookingS__3214EC07A5D47DE2");
 
             entity.HasIndex(e => new { e.SeatId, e.BookingId }, "UQ_Seat_Per_Show").IsUnique();
 
@@ -110,7 +110,7 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<Language>(entity =>
         {
-            entity.HasKey(e => e.LanguageId).HasName("PK__Language__B93855AB39201F31");
+            entity.HasKey(e => e.LanguageId).HasName("PK__Language__B93855ABFF8F1C2F");
 
             entity.Property(e => e.EnglishName).HasMaxLength(200);
             entity.Property(e => e.IsoCode).HasMaxLength(10);
@@ -130,7 +130,7 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<PasswordResetRequest>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Password__3214EC072564DF2F");
+            entity.HasKey(e => e.Id).HasName("PK__Password__3214EC07457F5F96");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")

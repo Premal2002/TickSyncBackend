@@ -1,4 +1,6 @@
-﻿namespace TickSyncAPI.Models.Dtos
+﻿using TickSyncAPI.Models;
+
+namespace TickSyncAPI.Dtos.Seat
 {
     public class ShowVenueGroup
     {

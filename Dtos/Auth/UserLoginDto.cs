@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace TickSyncAPI.Models.Dtos
+namespace TickSyncAPI.Dtos.Auth
 {
     public class UserLoginDto
     {

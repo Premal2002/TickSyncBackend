@@ -1,16 +1,15 @@
-﻿using TickSyncAPI.Models;
-using TickSyncAPI.Models.Dtos;
+﻿using TickSyncAPI.Dtos.Auth;
+using TickSyncAPI.Models;
 
 namespace TickSyncAPI.Interfaces
 {
     public interface IUserService
     {
+        public Task<IEnumerable<User>> GetUsers();
+        public Task<User> GetUser(int id);
+        public Task<string> PutUser(int id, User user);
+        public Task<string> DeleteUser(int id);
         public Task<User> RegisterUser(UserRegisterDto user);
-        public Task<ShowSeatLayoutDto> GetShowSeatLayout(int showId);
-        public Task<List<int>> LockSeatsInCache(SeatLockRequest request);
-        public Task<List<SeatAvailabilityDto>> GetSeatAvailability(int showId);
-        public Task<InitiateBookingResponse> InitiateBooking(InitiateBookingRequest request);
-        public Task<ConfirmBookingResponse> ConfirmBooking(ConfirmBookingRequest request);
 
     }
 }

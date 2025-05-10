@@ -1,4 +1,4 @@
-﻿namespace TickSyncAPI.Models.Dtos
+﻿namespace TickSyncAPI.Dtos.Seat
 {
     public class SeatDto
     {
