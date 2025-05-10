@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using TickSyncAPI.Models;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.HelperClasses;
-using Microsoft.Extensions.Caching.Memory;
 using TickSyncAPI.Dtos;
 using TickSyncAPI.Dtos.Auth;
 using TickSyncAPI.Dtos.Seat;
@@ -14,11 +13,9 @@ namespace TickSyncAPI.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly BookingSystemContext _context;
         private readonly IUserService _userService;
-        public UsersController(BookingSystemContext context, IUserService userService)
+        public UsersController(IUserService userService)
         {
-            _context = context;
             _userService = userService;
         }
 
@@ -26,21 +23,33 @@ namespace TickSyncAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
-            return await _context.Users.ToListAsync();
+            try
+            {
+                var users = await _userService.GetUsers();
+                return Ok(users);
+            }
+            catch (Exception ex) 
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            } 
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-
-            if (user == null)
+            try
             {
-                return NotFound();
+                return await _userService.GetUser(id);
             }
-
-            return user;
+            catch (CustomException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
         }
 
         // PUT: api/Users/5
@@ -48,32 +57,20 @@ namespace TickSyncAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int id, User user)
         {
-            if (id != user.UserId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(user).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                var res = await _userService.PutUser(id,user);
+                return Ok(res);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (CustomException ex)
             {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return StatusCode(ex.StatusCode, ex.Message);
             }
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
         }
-
 
         // POST: api/Users
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
@@ -103,30 +100,10 @@ namespace TickSyncAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool UserExists(int id)
-        {
-            return _context.Users.Any(e => e.UserId == id);
-        }
-
-        [HttpGet("layout/{showId}")]
-        public async Task<ActionResult<ShowSeatLayoutDto>> GetSeatLayout(int showId)
-        {
             try
             {
-                var result = await _userService.GetShowSeatLayout(showId);
-                return result;
+                var res = await _userService.DeleteUser(id);
+                return Ok(res);
             }
             catch (CustomException ex)
             {
@@ -138,76 +115,5 @@ namespace TickSyncAPI.Controllers
             }
         }
 
-        [HttpPost("lock")]
-        public async Task<IActionResult> LockSeats([FromBody] SeatLockRequest request)
-        {
-            try
-            {
-                var result = await _userService.LockSeatsInCache(request);
-                return Ok(result);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
-        }
-
-        [HttpGet("availability")]
-        public async Task<IActionResult> GetSeatAvailability(int showId)
-        {
-            try
-            {
-                var result = await _userService.GetSeatAvailability(showId);
-                return Ok(result);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
-        }
-
-        [HttpPost("initiate")]
-        public async Task<ActionResult<InitiateBookingResponse>> InitiateBooking([FromBody] InitiateBookingRequest request)
-        {
-            try
-            {
-                var result = await _userService.InitiateBooking(request);
-                return Ok(result);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
-        }
-
-        [HttpPost("confirm")]
-        public async Task<ActionResult> ConfirmBooking([FromBody] ConfirmBookingRequest request)
-        {
-            try
-            {
-                var result = await _userService.ConfirmBooking(request);
-                return Ok(result);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
-        }
     }
 }

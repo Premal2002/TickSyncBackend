@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TickSyncAPI.Dtos.Movie;
+using TickSyncAPI.Dtos.Movies;
 using TickSyncAPI.Dtos.Seat;
 using TickSyncAPI.HelperClasses;
 using TickSyncAPI.Interfaces;
@@ -16,116 +16,107 @@ namespace TickSyncAPI.Controllers
     //[Authorize(Roles ="user,admin")]
     public class MoviesController : ControllerBase
     {
-        private readonly BookingSystemContext _context;
         private readonly ITmbdService _tmdbService;
+        private readonly IMovieService _movieService;
 
-        public MoviesController(BookingSystemContext context, ITmbdService tmdbService)
+        public MoviesController(ITmbdService tmdbService, IMovieService movieService)
         {
-            _context = context;
             _tmdbService = tmdbService;
+            _movieService = movieService;
         }
 
         // GET: api/Movies
         [HttpPost("getMovies")]
         public async Task<ActionResult<object>> GetMovies([FromBody] MoviesFilter filter)
         {
-            var query = _context.Movies.AsQueryable();
-
-            // Filter by language
-            if (filter.Languages != null && filter.Languages.Count > 0)
+            try
             {
-                query = query.Where(m => filter.Languages.Contains(m.Language));
+                var res = await _movieService.GetMovies(filter);
+                return Ok(res);
             }
-
-            // Filter by genre
-            if (filter.Genres != null && filter.Genres.Count > 0)
+            catch (Exception ex)
             {
-                query = query.Where(m => filter.Genres.Any(g => m.Genre.Contains(g)));
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
             }
-
-            // Get total count before pagination
-            int totalMovies = await query.CountAsync();
-
-            // Apply pagination
-            var movies = await query
-                .Skip((filter.Page - 1) * filter.Limit)
-                .Take(filter.Limit)
-                .ToListAsync();
-
-            return Ok(new
-            {
-                movies,
-                total = totalMovies
-            });
         }
-
 
         // GET: api/Movies/Trending - based on popularity
         [HttpGet("Trending")]
         public async Task<ActionResult<IEnumerable<Movie>>> GetTrendingMovies()
         {
-            return await _context.Movies
-                                 .OrderByDescending(m => m.Popularity)
-                                 .Take(10)
-                                 .ToListAsync();
+            try
+            {
+                var res = _movieService.GetTrendingMovies();
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
         }
 
         // GET: api/Movies/Trending - based on rating and release date
         [HttpGet("Recommended")]
         public async Task<ActionResult<IEnumerable<Movie>>> GetRecommendedMovies()
         {
-            return await _context.Movies
-                                 .Where(m => m.Rating != null && m.Rating >= 7.0)  // Only highly rated movies
-                                 .OrderByDescending(m => m.ReleaseDate)
-                                 .Take(10)
-                                 .ToListAsync();
+            try
+            {
+                var res = _movieService.GetRecommendedMovies();
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
         }
 
         // GET: api/Movies/getRelatedMovies - get related similar movies based on a movie
         [HttpPost("getRelatedMovies/{movieId}")]
         public async Task<ActionResult<IEnumerable<Movie>>> GetRelatedMovies(int movieId)
         {
-            var movie = await _context.Movies.FirstOrDefaultAsync(m => m.MovieId == movieId);
-            return await _context.Movies
-                                 .Where(m => m.MovieId != movie.MovieId && (m.Language == movie.Language && m.Genre.Contains(movie.Genre)))
-                                 .ToListAsync();
+            try
+            {
+                var res = _movieService.GetRelatedMovies(movieId);
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
         }
 
         // GET: api/Movies/getMovieShows/${movieId} - To get all the upcoming shows of a movie 
         [HttpGet("getMovieShows/{movieId}")]
         public async Task<ActionResult<IEnumerable<ShowVenueGroup>>> GetMovieShows(int movieId)
         {
-            var shows = await _context.Shows
-                                      .Where(s => s.MovieId == movieId && s.ShowDate >= DateOnly.FromDateTime(DateTime.Now))
-                                      .Include(s => s.Venue)
-                                      .ToListAsync();
-
-            var grouped = shows
-                .GroupBy(s => s.VenueId)
-                .Select(g => new ShowVenueGroup
-                {
-                    VenueId = g.Key,
-                    Name = g.First().Venue.Name,
-                    Location = g.First().Venue.Location,
-                    Shows = g.ToList()
-                })
-                .ToList();                
-
-            return grouped;
+            try
+            {
+                var res = _movieService.GetMovieShows(movieId);
+                return Ok(res);
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
         }
 
         // GET: api/Movies/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Movie>> GetMovie(int id)
         {
-            var movie = await _context.Movies.FindAsync(id);
-
-            if (movie == null)
+            try
             {
-                return NotFound();
+                var res = await _movieService.GetMovie(id);
+                return Ok(res);
             }
-
-            return movie;
+            catch(CustomException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
         }
 
         [HttpGet("TMDB/Movies")]
@@ -200,30 +191,19 @@ namespace TickSyncAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutMovie(int id, Movie movie)
         {
-            if (id != movie.MovieId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(movie).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                var res = await _movieService.PutMovie(id,movie);
+                return Ok(res);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (CustomException ex)
             {
-                if (!MovieExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return StatusCode(ex.StatusCode, ex.Message);
             }
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
         }
 
         // POST: api/Movies
@@ -231,31 +211,34 @@ namespace TickSyncAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Movie>> PostMovie(Movie movie)
         {
-            _context.Movies.Add(movie);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetMovie", new { id = movie.MovieId }, movie);
+            try
+            {
+                var res = await _movieService.PostMovie(movie);
+                return Ok(res);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
         }
 
         // DELETE: api/Movies/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMovie(int id)
         {
-            var movie = await _context.Movies.FindAsync(id);
-            if (movie == null)
+            try
             {
-                return NotFound();
+                var res = await _movieService.DeleteMovie(id);
+                return Ok(res);
             }
-
-            _context.Movies.Remove(movie);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool MovieExists(int id)
-        {
-            return _context.Movies.Any(e => e.MovieId == id);
+            catch (CustomException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
         }
     }
 }

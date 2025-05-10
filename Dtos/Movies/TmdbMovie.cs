@@ -1,4 +1,4 @@
-﻿namespace TickSyncAPI.Dtos.Movie
+﻿namespace TickSyncAPI.Dtos.Movies
 {
     public class TmdbMovie
     {
