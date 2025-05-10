@@ -46,7 +46,7 @@ namespace TickSyncAPI.Controllers
         {
             try
             {
-                var res = _movieService.GetTrendingMovies();
+                var res = await _movieService.GetTrendingMovies();
                 return Ok(res);
             }
             catch (Exception ex)
@@ -61,7 +61,7 @@ namespace TickSyncAPI.Controllers
         {
             try
             {
-                var res = _movieService.GetRecommendedMovies();
+                var res = await _movieService.GetRecommendedMovies();
                 return Ok(res);
             }
             catch (Exception ex)
@@ -76,7 +76,7 @@ namespace TickSyncAPI.Controllers
         {
             try
             {
-                var res = _movieService.GetRelatedMovies(movieId);
+                var res = await _movieService.GetRelatedMovies(movieId);
                 return Ok(res);
             }
             catch (Exception ex)
@@ -91,7 +91,7 @@ namespace TickSyncAPI.Controllers
         {
             try
             {
-                var res = _movieService.GetMovieShows(movieId);
+                var res = await _movieService.GetMovieShows(movieId);
                 return Ok(res);
             }
             catch(Exception ex)
