@@ -4,10 +4,10 @@ using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NuGet.Packaging;
+using TickSyncAPI.Dtos.Auth;
 using TickSyncAPI.HelperClasses;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
-using TickSyncAPI.Models.Dtos;
 
 namespace TickSyncAPI.Services
 {

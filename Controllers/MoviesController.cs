@@ -2,10 +2,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TickSyncAPI.Dtos.Movie;
+using TickSyncAPI.Dtos.Seat;
 using TickSyncAPI.HelperClasses;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
-using TickSyncAPI.Models.Dtos;
 
 namespace TickSyncAPI.Controllers
 {

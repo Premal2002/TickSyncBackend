@@ -4,7 +4,7 @@ using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
 using TickSyncAPI.HelperClasses;
 using Microsoft.EntityFrameworkCore;
-using TickSyncAPI.Models.Dtos;
+using TickSyncAPI.Dtos.Movie;
 
 namespace TickSyncAPI.Services
 {

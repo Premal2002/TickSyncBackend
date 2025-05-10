@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TickSyncAPI.Dtos.Auth;
 using TickSyncAPI.HelperClasses;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
-using TickSyncAPI.Models.Dtos;
 
 namespace TickSyncAPI.Controllers
 {

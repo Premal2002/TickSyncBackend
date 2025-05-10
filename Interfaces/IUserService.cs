@@ -1,5 +1,7 @@
-﻿using TickSyncAPI.Models;
-using TickSyncAPI.Models.Dtos;
+﻿using TickSyncAPI.Dtos;
+using TickSyncAPI.Dtos.Auth;
+using TickSyncAPI.Dtos.Seat;
+using TickSyncAPI.Models;
 
 namespace TickSyncAPI.Interfaces
 {

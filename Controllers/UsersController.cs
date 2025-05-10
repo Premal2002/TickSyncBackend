@@ -2,9 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using TickSyncAPI.Models;
 using TickSyncAPI.Interfaces;
-using TickSyncAPI.Models.Dtos;
 using TickSyncAPI.HelperClasses;
 using Microsoft.Extensions.Caching.Memory;
+using TickSyncAPI.Dtos;
+using TickSyncAPI.Dtos.Auth;
+using TickSyncAPI.Dtos.Seat;
 
 namespace TickSyncAPI.Controllers
 {
