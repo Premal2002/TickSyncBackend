@@ -34,7 +34,7 @@ namespace TickSyncAPI.Controllers
             }
         }
 
-        [HttpGet("getLatestSeatsLayout")]
+        [HttpGet("getLatestSeatsLayout/{showId}")]
         public async Task<IActionResult> GetLatestSeatsLayout(int showId)
         {
             try
