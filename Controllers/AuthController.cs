@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using TickSyncAPI.Dtos.Auth;
 using TickSyncAPI.HelperClasses;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
-using TickSyncAPI.Models.Dtos;
 
 namespace TickSyncAPI.Controllers
 {
@@ -31,17 +31,31 @@ namespace TickSyncAPI.Controllers
         }
 
         [HttpPost("assignRole")]
-        public bool AssignRoleToUser([FromBody] AddUserRole userRole)
+        public ActionResult<bool> AssignRoleToUser([FromBody] AddUserRole userRole)
         {
-            var addedUserRole = _authService.AssignRoleToUser(userRole);
-            return addedUserRole;
+            try
+            {
+                var addedUserRole = _authService.AssignRoleToUser(userRole);
+                return Ok(addedUserRole);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPost("addRole")]
         public ActionResult<Role>  AddRole([FromBody] Role role)
         {
-            var addedRole = _authService.AddRole(role);
-            return Ok(addedRole);
+            try
+            {
+                var addedRole = _authService.AddRole(role);
+                return Ok(addedRole);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPost("forgot-password")]
