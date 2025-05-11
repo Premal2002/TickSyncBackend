@@ -24,6 +24,13 @@ namespace TickSyncAPI.Services
             var show = await _context.Shows
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.ShowId == showId);
+            var venue = await _context.Venues
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.VenueId == show.VenueId);
+            var movie = await _context.Movies
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.MovieId == show.MovieId);
+
 
             if (show == null)
                 throw new CustomException(404, "Show not found.");
@@ -88,6 +95,9 @@ namespace TickSyncAPI.Services
                 ShowDate = show.ShowDate,
                 ShowTime = show.ShowTime,
                 VenueId = show.VenueId,
+                MovieName = movie.Title,
+                VenueName = venue.Name,
+                VenueLocation = venue.Location,
                 seatTypeGroup = seatTypeGroups
             };
         }
