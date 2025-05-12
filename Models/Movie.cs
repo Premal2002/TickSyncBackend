@@ -19,6 +19,8 @@ public partial class Movie
 
     public DateOnly? ReleaseDate { get; set; }
 
+    public double? Popularity { get; set; }
+
     public int? Tmdbid { get; set; }
 
     public string? PosterUrl { get; set; }
@@ -26,8 +28,6 @@ public partial class Movie
     public string? BackdropUrl { get; set; }
 
     public double? Rating { get; set; }
-
-    public double? Popularity { get; set; }
 
     public virtual ICollection<Show> Shows { get; set; } = new List<Show>();
 }

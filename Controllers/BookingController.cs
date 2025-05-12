@@ -89,7 +89,7 @@ namespace TickSyncAPI.Controllers
             }
         }
 
-        [HttpPost("CancelBooking")]
+        [HttpPost("cancelBooking")]
         public async Task<ActionResult> CancelBooking([FromBody] CancelBookingRequest request)
         {
             try
@@ -107,7 +107,7 @@ namespace TickSyncAPI.Controllers
             }
         }
 
-        [HttpPost("GetUserBooking/{userId}")]
+        [HttpPost("getUserBooking/{userId}")]
         public async Task<ActionResult> GetUserBooking(int userId)
         {
             try
@@ -124,5 +124,41 @@ namespace TickSyncAPI.Controllers
                 return StatusCode(500, "An unexpected error occurred: " + ex.Message);
             }
         }
+        
+        [HttpPost("createRazorpayOrder")]
+        public async Task<ActionResult<CreateOrderResponse>> CreateRazorpayOrder([FromBody] CreateOrderRequest request)
+        {
+            try
+            {
+                var result = await _bookingService.CreateRazorpayOrder(request);
+                return Ok(result);
+            }
+            catch (CustomException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
+        }
+
+        [HttpPost("paymentCallback")]
+        public async Task<IActionResult> PaymentCallback(PaymentCallbackRequest request)
+        {
+            try
+            {
+                var result = await _bookingService.PaymentCallback(request);
+                return Ok(new { message = result });
+            }
+            catch (CustomException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
+        } 
     }
 }

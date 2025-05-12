@@ -11,7 +11,7 @@ public partial class Booking
 
     public string? BookingType { get; set; }
 
-    public int ReferenceId { get; set; }
+    public string ReferenceId { get; set; } = null!;
 
     public int? ShowId { get; set; }
 

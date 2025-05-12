@@ -1,6 +1,7 @@
 ﻿using TickSyncAPI.Dtos.Seat;
 using TickSyncAPI.Dtos;
 using TickSyncAPI.Dtos.Booking;
+using Microsoft.AspNetCore.Mvc;
 
 namespace TickSyncAPI.Interfaces
 {
@@ -12,5 +13,7 @@ namespace TickSyncAPI.Interfaces
         public Task<ConfirmBookingResponse> ConfirmBooking(ConfirmBookingRequest request);
         public Task<bool> CancelBooking(CancelBookingRequest request);
         public Task<List<UserBookingsResponse>> GetUserBookings(int userId);
+        public Task<CreateOrderResponse> CreateRazorpayOrder(CreateOrderRequest request);
+        public Task<string> PaymentCallback(PaymentCallbackRequest request);
     }
 }

@@ -6,6 +6,7 @@ using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
 using Microsoft.Extensions.Caching.Memory;
 using TickSyncAPI.Dtos.Booking;
+using Razorpay.Api;
 
 namespace TickSyncAPI.Services
 {
@@ -13,11 +14,13 @@ namespace TickSyncAPI.Services
     {
         private readonly BookingSystemContext _context;
         private readonly IMemoryCache _memoryCache;
+        private readonly IConfiguration _configuration;
 
-        public BookingService(BookingSystemContext context, IMemoryCache memoryCache)
+        public BookingService(BookingSystemContext context, IMemoryCache memoryCache, IConfiguration configuration)
         {
             _context = context;
             _memoryCache = memoryCache;
+            _configuration = configuration;
         }
 
         public async Task<ShowSeatLayoutDto> GetLatestSeatsLayout(int showId)
@@ -199,6 +202,7 @@ namespace TickSyncAPI.Services
                 ShowId = request.ShowId,
                 TotalAmount = request.TotalAmount,
                 Status = "Pending",
+                ReferenceId = "",
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -292,25 +296,108 @@ namespace TickSyncAPI.Services
 
         public async Task<List<UserBookingsResponse>> GetUserBookings(int userId)
         {
-            var bookings = await _context.Bookings.Where(b => b.UserId == userId && b.Status != "Cancelled").ToListAsync();
-            var res = new List<UserBookingsResponse>();
-            if (bookings.Count > 0)
+            var userBookings = await _context.Bookings
+                    .Where(b => b.UserId == userId && b.Status != "Cancelled")
+                    .Join(
+                        _context.Shows,
+                        booking => booking.ShowId,
+                        show => show.ShowId,
+                        (booking, show) => new UserBookingsResponse
+                        {
+                            BookingId = booking.BookingId,
+                            Status = booking.Status,
+                            TotalAmount = booking.TotalAmount,
+                            ShowTime = show.ShowTime
+                        }
+                    )
+                    .ToListAsync();
+
+            return userBookings;
+        }
+
+        public async Task<CreateOrderResponse> CreateRazorpayOrder(CreateOrderRequest request)
+        {
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.BookingId == request.BookingId && b.Status == "Pending");
+
+            if (booking == null)
             {
-                var showIds = bookings.Select(b => b.ShowId).ToList();
-                var shows = await _context.Shows.Where(s => showIds.Contains(s.ShowId)).ToListAsync();
-                foreach (var item in bookings)
-                {
-                    var userBooking = new UserBookingsResponse()
-                    {
-                        BookingId = item.BookingId,
-                        Status = item.Status,
-                        TotalAmount = item.TotalAmount,
-                        ShowTime = shows.FirstOrDefault(s => s.ShowId == item.ShowId).ShowTime
-                    };
-                    res.Add(userBooking);
-                }
+                throw new CustomException(404, "Invalid or already processed booking.");
             }
-            return res;
+
+            var client = new RazorpayClient(_configuration["Razorpay:Key"], _configuration["Razorpay:Secret"]);
+
+            Dictionary<string, object> options = new()
+            {
+                { "amount", (int)(request.Amount * 100) }, // Razorpay accepts amount in paise
+                { "currency", "INR" },
+                { "receipt", "booking_rcpt_" + request.BookingId },
+                { "payment_capture", 1 }
+            };
+
+            Order order = client.Order.Create(options);
+
+            booking.Status = "PaymentInitiated";
+            booking.ReferenceId = order["id"]; 
+            await _context.SaveChangesAsync();
+
+            return new CreateOrderResponse
+            {
+                OrderId = order["id"].ToString(),
+                RazorpayKey = _configuration["Razorpay:Key"]
+            };
+        }
+
+        public async Task<string> PaymentCallback(PaymentCallbackRequest request)
+        {
+            var booking = await _context.Bookings
+                               .Include(b => b.Payments)
+                               .FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
+
+            if (booking == null)
+                throw new CustomException(404, "Booking not found.");
+
+            if (booking.Status == "Confirmed")
+                return "Already confirmed.";
+
+            var secret = _configuration["Razorpay:Secret"]; // from appsettings.json
+
+            bool isValid = RazorpayUtils.VerifyPaymentSignature(
+                request.RazorpayOrderId,
+                request.RazorpayPaymentId,
+                request.RazorpaySignature,
+                secret
+            );
+
+            if (!isValid)
+            {
+                booking.Status = "Failed";
+                await _context.SaveChangesAsync();
+                throw new CustomException(400, "Invalid payment signature.");
+            }
+
+            // You can also optionally fetch payment details from Razorpay API here
+
+            booking.Status = "Confirmed";
+            booking.Payments.Add(new Models.Payment
+            {
+                BookingId = booking.BookingId,
+                UserId = booking.UserId,
+                Amount = booking.TotalAmount,
+                Currency = "INR",
+                Status = "Success",
+                RazorpayOrderId = request.RazorpayOrderId,
+                RazorpayPaymentId = request.RazorpayPaymentId,
+                RazorpaySignature = request.RazorpaySignature,
+                TransactionId = $"TXN-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}",
+                PaymentMethod = "Razorpay",
+                PaidAt = DateTime.Now,
+                CreatedAt = DateTime.Now,
+                Notes = "Payment confirmed via frontend callback."
+            });
+
+            await _context.SaveChangesAsync();
+
+            return "Booking confirmed.";
         }
     }
 }
