@@ -1,5 +1,6 @@
 ﻿using TickSyncAPI.Dtos.Seat;
 using TickSyncAPI.Dtos;
+using TickSyncAPI.Dtos.Booking;
 
 namespace TickSyncAPI.Interfaces
 {
@@ -9,6 +10,7 @@ namespace TickSyncAPI.Interfaces
         public Task<ShowSeatLayoutDto> GetLatestSeatsLayout(int showId);
         public Task<InitiateBookingResponse> InitiateBooking(InitiateBookingRequest request);
         public Task<ConfirmBookingResponse> ConfirmBooking(ConfirmBookingRequest request);
-
+        public Task<bool> CancelBooking(CancelBookingRequest request);
+        public Task<List<UserBookingsResponse>> GetUserBookings(int userId);
     }
 }

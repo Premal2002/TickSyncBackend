@@ -5,6 +5,7 @@ using TickSyncAPI.HelperClasses;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Models;
 using Microsoft.Extensions.Caching.Memory;
+using TickSyncAPI.Dtos.Booking;
 
 namespace TickSyncAPI.Services
 {
@@ -123,6 +124,18 @@ namespace TickSyncAPI.Services
                 }
             }
 
+            var bookedSeatIds = await _context.BookingSeats
+                .Where(bs => request.SeatIds.Contains(bs.SeatId)
+                             && bs.Booking.ShowId == request.ShowId
+                             && bs.Booking.Status == "Confirmed")
+                .Select(bs => bs.SeatId)
+                .ToListAsync();
+
+            if (bookedSeatIds.Any())
+            {
+                throw new CustomException(409, $"Seats already booked: {string.Join(",", bookedSeatIds)}");
+            }
+
             foreach (var seatId in request.SeatIds)
             {
                 string cacheKey = $"seat_lock:{request.ShowId}:{seatId}";
@@ -222,6 +235,9 @@ namespace TickSyncAPI.Services
             if (booking.Status == "Confirmed")
                 throw new CustomException(400, $"Booking is already confirmed.");
 
+            if (booking.Status == "Cancelled")
+                throw new CustomException(400, $"Booking is cancelled earlier.");
+
             // Confirm booking
             booking.Status = "Confirmed";
             _context.Bookings.Update(booking);
@@ -242,6 +258,59 @@ namespace TickSyncAPI.Services
                 BookingId = booking.BookingId,
                 Status = booking.Status
             };
+        }
+
+        public async Task<bool> CancelBooking(CancelBookingRequest request)
+        {
+            var booking = await _context.Bookings
+               .Include(b => b.BookingSeats)
+               .FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
+
+            if (booking == null)
+                throw new CustomException(409, $"Booking not found.");
+
+            if (booking.Status == "Confirmed")
+                throw new CustomException(400, $"Booking is already confirmed.");
+
+            booking.Status = "Cancelled";
+            _context.Bookings.Update(booking);
+
+            var seatIds = booking.BookingSeats.Select(bs => bs.SeatId).ToList();
+
+            // Remove seat locks from memory cache
+            foreach (var seatId in seatIds)
+            {
+                var cacheKey = $"seat_lock:{booking.ShowId}:{seatId}";
+                _memoryCache.Remove(cacheKey);
+            }
+
+            _context.BookingSeats.RemoveRange(booking.BookingSeats);
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
+
+        public async Task<List<UserBookingsResponse>> GetUserBookings(int userId)
+        {
+            var bookings = await _context.Bookings.Where(b => b.UserId == userId && b.Status != "Cancelled").ToListAsync();
+            var res = new List<UserBookingsResponse>();
+            if (bookings.Count > 0)
+            {
+                var showIds = bookings.Select(b => b.ShowId).ToList();
+                var shows = await _context.Shows.Where(s => showIds.Contains(s.ShowId)).ToListAsync();
+                foreach (var item in bookings)
+                {
+                    var userBooking = new UserBookingsResponse()
+                    {
+                        BookingId = item.BookingId,
+                        Status = item.Status,
+                        TotalAmount = item.TotalAmount,
+                        ShowTime = shows.FirstOrDefault(s => s.ShowId == item.ShowId).ShowTime
+                    };
+                    res.Add(userBooking);
+                }
+            }
+            return res;
         }
     }
 }
