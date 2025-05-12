@@ -54,6 +54,7 @@ public partial class BookingSystemContext : DbContext
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.ReferenceId).HasMaxLength(100);
             entity.Property(e => e.Status)
                 .HasMaxLength(50)
                 .HasDefaultValue("Pending");
@@ -71,7 +72,7 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<BookingSeat>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__BookingS__3214EC07A5D47DE2");
+            entity.HasKey(e => e.Id).HasName("PK__BookingS__3214EC07C994E006");
 
             entity.HasIndex(e => new { e.SeatId, e.BookingId }, "UQ_Seat_Per_Show").IsUnique();
 
@@ -110,7 +111,7 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<Language>(entity =>
         {
-            entity.HasKey(e => e.LanguageId).HasName("PK__Language__B93855ABFF8F1C2F");
+            entity.HasKey(e => e.LanguageId).HasName("PK__Language__B93855AB39201F31");
 
             entity.Property(e => e.EnglishName).HasMaxLength(200);
             entity.Property(e => e.IsoCode).HasMaxLength(10);
@@ -130,7 +131,7 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<PasswordResetRequest>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Password__3214EC07457F5F96");
+            entity.HasKey(e => e.Id).HasName("PK__Password__3214EC072564DF2F");
 
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("(getdate())")
@@ -142,22 +143,32 @@ public partial class BookingSystemContext : DbContext
 
         modelBuilder.Entity<Payment>(entity =>
         {
+            entity.HasKey(e => e.PaymentId).HasName("PK__Payments__9B556A3868B7B8A3");
+
             entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
             entity.Property(e => e.CreatedAt)
-                .HasDefaultValueSql("(getdate())")
+                .HasDefaultValueSql("(getutcdate())")
                 .HasColumnType("datetime");
+            entity.Property(e => e.Currency)
+                .HasMaxLength(10)
+                .HasDefaultValue("INR");
+            entity.Property(e => e.PaidAt).HasColumnType("datetime");
+            entity.Property(e => e.PaymentMethod).HasMaxLength(50);
+            entity.Property(e => e.RazorpayOrderId).HasMaxLength(100);
+            entity.Property(e => e.RazorpayPaymentId).HasMaxLength(100);
+            entity.Property(e => e.RazorpaySignature).HasMaxLength(255);
             entity.Property(e => e.Status).HasMaxLength(50);
             entity.Property(e => e.TransactionId).HasMaxLength(100);
 
             entity.HasOne(d => d.Booking).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.BookingId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Payments_Booking");
+                .HasConstraintName("FK_Payments_Bookings");
 
             entity.HasOne(d => d.User).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Payments_User");
+                .HasConstraintName("FK_Payments_Users");
         });
 
         modelBuilder.Entity<Role>(entity =>
