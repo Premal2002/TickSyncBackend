@@ -1,3 +1,6 @@
+ALTER TABLE [dbo].[Bookings]
+ALTER COLUMN [ReferenceId] NVARCHAR(100) NOT NULL;
+
 -- Drop existing table if exists (use with caution in dev only)
 DROP TABLE IF EXISTS [dbo].[Payments];
 
