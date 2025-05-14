@@ -71,23 +71,23 @@ namespace TickSyncAPI.Controllers
             }
         }
 
-        [HttpPost("confirmBooking")]
-        public async Task<ActionResult> ConfirmBooking([FromBody] ConfirmBookingRequest request)
-        {
-            try
-            {
-                var result = await _bookingService.ConfirmBooking(request);
-                return Ok(result);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
-        }
+        //[HttpPost("confirmBooking")]
+        //public async Task<ActionResult> ConfirmBooking([FromBody] ConfirmBookingRequest request)
+        //{
+        //    try
+        //    {
+        //        var result = await _bookingService.ConfirmBooking(request);
+        //        return Ok(result);
+        //    }
+        //    catch (CustomException ex)
+        //    {
+        //        return StatusCode(ex.StatusCode, ex.Message);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+        //    }
+        //}
 
         [HttpPost("cancelBooking")]
         public async Task<ActionResult> CancelBooking([FromBody] CancelBookingRequest request)
