@@ -227,42 +227,42 @@ namespace TickSyncAPI.Services
             };
         }
 
-        public async Task<ConfirmBookingResponse> ConfirmBooking(ConfirmBookingRequest request)
-        {
-            var booking = await _context.Bookings
-                .Include(b => b.BookingSeats)
-                .FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
+        //public async Task<ConfirmBookingResponse> ConfirmBooking(ConfirmBookingRequest request)
+        //{
+        //    var booking = await _context.Bookings
+        //        .Include(b => b.BookingSeats)
+        //        .FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
 
-            if (booking == null)
-                throw new CustomException(409, $"Booking not found.");
+        //    if (booking == null)
+        //        throw new CustomException(409, $"Booking not found.");
 
-            if (booking.Status == "Confirmed")
-                throw new CustomException(400, $"Booking is already confirmed.");
+        //    if (booking.Status == "Confirmed")
+        //        throw new CustomException(400, $"Booking is already confirmed.");
 
-            if (booking.Status == "Cancelled")
-                throw new CustomException(400, $"Booking is cancelled earlier.");
+        //    if (booking.Status == "Cancelled")
+        //        throw new CustomException(400, $"Booking is cancelled earlier.");
 
-            // Confirm booking
-            booking.Status = "Confirmed";
-            _context.Bookings.Update(booking);
+        //    // Confirm booking
+        //    booking.Status = "Confirmed";
+        //    _context.Bookings.Update(booking);
 
-            var seatIds = booking.BookingSeats.Select(bs => bs.SeatId).ToList();
+        //    var seatIds = booking.BookingSeats.Select(bs => bs.SeatId).ToList();
 
-            // Remove seat locks from memory cache
-            foreach (var seatId in seatIds)
-            {
-                var cacheKey = $"seat_lock:{booking.ShowId}:{seatId}";
-                _memoryCache.Remove(cacheKey);
-            }
+        //    // Remove seat locks from memory cache
+        //    foreach (var seatId in seatIds)
+        //    {
+        //        var cacheKey = $"seat_lock:{booking.ShowId}:{seatId}";
+        //        _memoryCache.Remove(cacheKey);
+        //    }
 
-            await _context.SaveChangesAsync();
+        //    await _context.SaveChangesAsync();
 
-            return new ConfirmBookingResponse
-            {
-                BookingId = booking.BookingId,
-                Status = booking.Status
-            };
-        }
+        //    return new ConfirmBookingResponse
+        //    {
+        //        BookingId = booking.BookingId,
+        //        Status = booking.Status
+        //    };
+        //}
 
         public async Task<bool> CancelBooking(CancelBookingRequest request)
         {
@@ -342,6 +342,8 @@ namespace TickSyncAPI.Services
 
             return new CreateOrderResponse
             {
+                BookingId = booking.BookingId,
+                TotalAmount = request.Amount,
                 OrderId = order["id"].ToString(),
                 RazorpayKey = _configuration["Razorpay:Key"]
             };
@@ -350,8 +352,9 @@ namespace TickSyncAPI.Services
         public async Task<string> PaymentCallback(PaymentCallbackRequest request)
         {
             var booking = await _context.Bookings
-                               .Include(b => b.Payments)
-                               .FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
+                                 .Include(b => b.Payments)
+                                 .Include(b => b.BookingSeats)
+                                 .FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
 
             if (booking == null)
                 throw new CustomException(404, "Booking not found.");
@@ -359,7 +362,7 @@ namespace TickSyncAPI.Services
             if (booking.Status == "Confirmed")
                 return "Already confirmed.";
 
-            var secret = _configuration["Razorpay:Secret"]; // from appsettings.json
+            var secret = _configuration["Razorpay:Secret"];
 
             bool isValid = RazorpayUtils.VerifyPaymentSignature(
                 request.RazorpayOrderId,
@@ -375,9 +378,10 @@ namespace TickSyncAPI.Services
                 throw new CustomException(400, "Invalid payment signature.");
             }
 
-            // You can also optionally fetch payment details from Razorpay API here
-
+            // ✅ Confirm booking
             booking.Status = "Confirmed";
+
+            // ✅ Add Payment record
             booking.Payments.Add(new Models.Payment
             {
                 BookingId = booking.BookingId,
@@ -390,14 +394,21 @@ namespace TickSyncAPI.Services
                 RazorpaySignature = request.RazorpaySignature,
                 TransactionId = $"TXN-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}",
                 PaymentMethod = "Razorpay",
-                PaidAt = DateTime.Now,
-                CreatedAt = DateTime.Now,
+                PaidAt = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
                 Notes = "Payment confirmed via frontend callback."
             });
 
+            // ✅ Unlock seats
+            foreach (var seat in booking.BookingSeats)
+            {
+                var cacheKey = $"seat_lock:{booking.ShowId}:{seat.SeatId}";
+                _memoryCache.Remove(cacheKey);
+            }
+
             await _context.SaveChangesAsync();
 
-            return "Booking confirmed.";
+            return "Booking confirmed successfully.";
         }
     }
 }
