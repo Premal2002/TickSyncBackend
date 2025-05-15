@@ -7,6 +7,8 @@ using TickSyncAPI.Models;
 using Microsoft.Extensions.Caching.Memory;
 using TickSyncAPI.Dtos.Booking;
 using Razorpay.Api;
+using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 
 namespace TickSyncAPI.Services
 {
@@ -15,12 +17,14 @@ namespace TickSyncAPI.Services
         private readonly BookingSystemContext _context;
         private readonly IMemoryCache _memoryCache;
         private readonly IConfiguration _configuration;
+        private readonly HelperClasses.WebSocketManager _webSocketManager;
 
-        public BookingService(BookingSystemContext context, IMemoryCache memoryCache, IConfiguration configuration)
+        public BookingService(BookingSystemContext context, IMemoryCache memoryCache, IConfiguration configuration, HelperClasses.WebSocketManager webSocketManager)
         {
             _context = context;
             _memoryCache = memoryCache;
             _configuration = configuration;
+            _webSocketManager = webSocketManager;
         }
 
         public async Task<ShowSeatLayoutDto> GetLatestSeatsLayout(int showId)
@@ -160,6 +164,13 @@ namespace TickSyncAPI.Services
 
                 _memoryCache.Set(cacheKey, lockInfo, TimeSpan.FromMinutes(10));
             }
+
+            await _webSocketManager.BroadcastAsync(request.ShowId, JsonConvert.SerializeObject(new
+            {
+                type = "SEAT_LOCKED",
+                seatIds = request.SeatIds,
+                userId = request.UserId
+            }));
             return request.SeatIds;
         }
 
@@ -190,7 +201,7 @@ namespace TickSyncAPI.Services
                 if (!_memoryCache.TryGetValue<SeatLockInfo>(cacheKey, out var lockInfo) ||
                     lockInfo == null ||
                     lockInfo.UserId != request.UserId ||
-                    lockInfo.ExpiresAt <= DateTime.UtcNow)
+                    lockInfo.ExpiresAt <= DateTime.Now)
                 {
                     throw new CustomException(409, $"Seat {seatId} is not locked or lock expired.");
                 }
@@ -203,7 +214,7 @@ namespace TickSyncAPI.Services
                 TotalAmount = request.TotalAmount,
                 Status = "Pending",
                 ReferenceId = "",
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             };
 
             _context.Bookings.Add(booking);
@@ -213,7 +224,7 @@ namespace TickSyncAPI.Services
             {
                 BookingId = booking.BookingId,
                 SeatId = seatId,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.Now
             }).ToList();
 
             _context.BookingSeats.AddRange(bookingSeats);
@@ -290,7 +301,10 @@ namespace TickSyncAPI.Services
 
             _context.BookingSeats.RemoveRange(booking.BookingSeats);
             await _context.SaveChangesAsync();
-
+            await _webSocketManager.BroadcastAsync(booking.ShowId??0, JsonConvert.SerializeObject(new
+            {
+                type = "SEAT_LOCKED"
+            }));
             return true;
         }
 
@@ -407,7 +421,10 @@ namespace TickSyncAPI.Services
             }
 
             await _context.SaveChangesAsync();
-
+            await _webSocketManager.BroadcastAsync(booking.ShowId??0, JsonConvert.SerializeObject(new
+            {
+                type = "SEAT_LOCKED"
+            }));
             return "Booking confirmed successfully.";
         }
     }
