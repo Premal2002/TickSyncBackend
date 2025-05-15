@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TickSyncAPI.Interfaces;
+using TickSyncAPI.Middlewares;
 using TickSyncAPI.Models;
 using TickSyncAPI.Services;
 
@@ -28,6 +29,7 @@ builder.Services.AddTransient<ITmbdService,TmdbService>();
 builder.Services.AddTransient<IMovieService,MovieService>();
 builder.Services.AddTransient<IBookingService,BookingService>();
 builder.Services.AddTransient<IEmailService,EmailService>();
+builder.Services.AddSingleton<TickSyncAPI.HelperClasses.WebSocketManager>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
     options.RequireHttpsMetadata = false;
@@ -71,6 +73,11 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Enable WebSocket support
+app.UseWebSockets();
+
+app.UseMiddleware<WebSocketMiddleware>();
 
 //use CORS
 app.UseCors("AllowAll");
