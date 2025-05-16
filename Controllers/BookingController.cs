@@ -4,11 +4,13 @@ using TickSyncAPI.Dtos;
 using TickSyncAPI.HelperClasses;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Dtos.Booking;
+using Microsoft.AspNetCore.Authorization;
 
 namespace TickSyncAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;

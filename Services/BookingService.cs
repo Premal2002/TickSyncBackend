@@ -110,7 +110,7 @@ namespace TickSyncAPI.Services
             };
         }
 
-        public async Task<List<int>> LockSeatsInCache(SeatLockRequest request)
+        public async Task<SeatLockRequest> LockSeatsInCache(SeatLockRequest request)
         {
             var show = await _context.Shows.FirstOrDefaultAsync(s => s.ShowId == request.ShowId);
             if (show is null)
@@ -158,20 +158,52 @@ namespace TickSyncAPI.Services
                 var lockInfo = new SeatLockInfo
                 {
                     UserId = request.UserId,
+                    ShowId = request.ShowId,
+                    SeatId = seatId,
                     LockedAt = DateTime.Now,
-                    ExpiresAt = DateTime.Now.AddMinutes(10)
+                    ExpiresAt = DateTime.Now.AddMinutes(12)
                 };
 
-                _memoryCache.Set(cacheKey, lockInfo, TimeSpan.FromMinutes(10));
+                var cacheEntryOptions = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(12),
+                    PostEvictionCallbacks =
+                    {
+                        new PostEvictionCallbackRegistration
+                        {
+                            EvictionCallback = async (key, value, reason, state) =>
+                            {
+                                if (reason == EvictionReason.Expired)
+                                {
+                                    // The item expired due to timeout
+                                    Console.WriteLine($"Cache item with key '{key}' expired.");
+                    
+                                    // You can cast 'value' back to SeatLockInfo if needed
+                                    var lockInfo = value as SeatLockInfo;
+                                    //Console.WriteLine(lockInfo.SeatId);
+                                    await _webSocketManager.BroadcastAsync(lockInfo.ShowId, JsonConvert.SerializeObject(new
+                                    {
+                                        status = "Available",
+                                        seatIds = new List<int>(){lockInfo.SeatId}
+                                    }));
+
+                                    // Execute any logic here: notify, cleanup, etc.
+                                }
+                            }
+                        }
+                    }
+                };
+
+                _memoryCache.Set(cacheKey, lockInfo, cacheEntryOptions);
             }
 
             await _webSocketManager.BroadcastAsync(request.ShowId, JsonConvert.SerializeObject(new
             {
-                type = "SEAT_LOCKED",
+                status = "Locked",
                 seatIds = request.SeatIds,
                 userId = request.UserId
             }));
-            return request.SeatIds;
+            return request;
         }
 
         public async Task<InitiateBookingResponse> InitiateBooking(InitiateBookingRequest request)
@@ -303,7 +335,8 @@ namespace TickSyncAPI.Services
             await _context.SaveChangesAsync();
             await _webSocketManager.BroadcastAsync(booking.ShowId??0, JsonConvert.SerializeObject(new
             {
-                type = "SEAT_LOCKED"
+                status = "Available",
+                seatIds = seatIds
             }));
             return true;
         }
@@ -421,9 +454,10 @@ namespace TickSyncAPI.Services
             }
 
             await _context.SaveChangesAsync();
-            await _webSocketManager.BroadcastAsync(booking.ShowId??0, JsonConvert.SerializeObject(new
+            await _webSocketManager.BroadcastAsync(booking.ShowId ?? 0, JsonConvert.SerializeObject(new
             {
-                type = "SEAT_LOCKED"
+                status = "Booked",
+                seatIds = booking.BookingSeats.Select(s => s.SeatId).ToList()
             }));
             return "Booking confirmed successfully.";
         }
