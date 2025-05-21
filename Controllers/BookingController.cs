@@ -10,7 +10,7 @@ namespace TickSyncAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class BookingController : ControllerBase
     {
         private readonly IBookingService _bookingService;
@@ -161,6 +161,24 @@ namespace TickSyncAPI.Controllers
             {
                 return StatusCode(500, "An unexpected error occurred: " + ex.Message);
             }
-        } 
+        }
+
+        [HttpGet("getBookingHistory/{userId}")]
+        public async Task<IActionResult> GetBookingHistory(int userId)
+        {
+            try
+            {
+                var result = await _bookingService.GetUserBookingHistory(userId);
+                return Ok(result);
+            }
+            catch (CustomException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
+        }
     }
 }
