@@ -478,6 +478,7 @@ namespace TickSyncAPI.Services
                 BookingId = b.BookingId,
                 ReferenceId = b.ReferenceId,
                 MovieName = b.Show!.Movie.Title,
+                MoviePosterUrl = b.Show!.Movie.PosterUrl,
                 VenueName = b.Show.Venue.Name,
                 VenueLocation = b.Show.Venue.Location ?? "",
                 ShowDate = b.Show.ShowDate,

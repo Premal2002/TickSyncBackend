@@ -7,6 +7,7 @@ namespace TickSyncAPI.Dtos.Booking
         public int BookingId { get; set; }
         public string ReferenceId { get; set; }
         public string MovieName { get; set; }
+        public string MoviePosterUrl { get; set; }
         public string VenueName { get; set; }
         public string VenueLocation { get; set; }
         public DateOnly ShowDate { get; set; }
