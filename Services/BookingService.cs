@@ -461,5 +461,40 @@ namespace TickSyncAPI.Services
             }));
             return "Booking confirmed successfully.";
         }
+
+        public async Task<List<BookingHistoryDto>> GetUserBookingHistory(int userId)
+        {
+            var bookings = await _context.Bookings
+            .Where(b => b.UserId == userId && b.Status == "Confirmed")
+            .Include(b => b.Show)
+                .ThenInclude(s => s.Movie)
+            .Include(b => b.Show)
+                .ThenInclude(s => s.Venue)
+            .Include(b => b.BookingSeats)
+                .ThenInclude(bs => bs.Seat)
+            .OrderByDescending(b => b.CreatedAt)
+            .Select(b => new BookingHistoryDto
+            {
+                BookingId = b.BookingId,
+                ReferenceId = b.ReferenceId,
+                MovieName = b.Show!.Movie.Title,
+                MoviePosterUrl = b.Show!.Movie.PosterUrl,
+                VenueName = b.Show.Venue.Name,
+                VenueLocation = b.Show.Venue.Location ?? "",
+                ShowDate = b.Show.ShowDate,
+                ShowTime = b.Show.ShowTime,
+                TotalAmount = b.TotalAmount,
+                Status = b.Status,
+                CreatedAt = b.CreatedAt,
+                Seats = b.BookingSeats.Select(bs => new SeatDto
+                {
+                    SeatNumber = bs.Seat.SeatNumber,
+                    SeatType = bs.Seat.SeatType
+                }).ToList()
+            })
+            .ToListAsync();
+
+            return bookings;
+        }
     }
 }

@@ -15,5 +15,7 @@ namespace TickSyncAPI.Interfaces
         public Task<List<UserBookingsResponse>> GetUserBookings(int userId);
         public Task<CreateOrderResponse> CreateRazorpayOrder(CreateOrderRequest request);
         public Task<string> PaymentCallback(PaymentCallbackRequest request);
+
+        public Task<List<BookingHistoryDto>> GetUserBookingHistory(int userId);
     }
 }
