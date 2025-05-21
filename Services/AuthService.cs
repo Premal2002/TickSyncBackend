@@ -110,8 +110,10 @@ namespace TickSyncAPI.Services
                         var claims = new List<Claim>
                         {
                         new Claim(JwtRegisteredClaimNames.Sub,_configuration["Jwt:Subject"]),
-                        new Claim("Id",user.UserId.ToString()),
-                        new Claim("Email",user.Email)
+                        new Claim("id",user.UserId.ToString()),
+                        new Claim("email",user.Email),
+                        new Claim("name",user.FullName)
+
                     };
 
                         var userRoles = await _context.UserRoles.Where(r => r.UserId == user.UserId).ToListAsync();
