@@ -24,6 +24,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddHttpClient();
 builder.Services.AddTransient<IUserService,UserService>();
+builder.Services.AddTransient<IAdminService,AdminService>();
 builder.Services.AddTransient<IAuthService,AuthService>();
 builder.Services.AddTransient<ITmbdService,TmdbService>();
 builder.Services.AddTransient<IMovieService,MovieService>();
