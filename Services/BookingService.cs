@@ -488,6 +488,7 @@ namespace TickSyncAPI.Services
                 CreatedAt = b.CreatedAt,
                 Seats = b.BookingSeats.Select(bs => new SeatDto
                 {
+                    RowNumber = bs.Seat.RowNumber,
                     SeatNumber = bs.Seat.SeatNumber,
                     SeatType = bs.Seat.SeatType
                 }).ToList()
