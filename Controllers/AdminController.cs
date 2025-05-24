@@ -9,7 +9,7 @@ namespace TickSyncAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "admin")]
+    [Authorize(Roles ="admin")]
     public class AdminController : ControllerBase
     {
         private readonly IAdminService _adminService;
@@ -18,12 +18,12 @@ namespace TickSyncAPI.Controllers
             _adminService = adminService;
         }
 
-        [HttpGet("getAllConfirmedBookings")]
-        public async Task<IActionResult> GetAllConfirmedBookings()
+        [HttpGet("getAllDataCounts")]
+        public async Task<IActionResult> GetAllDataCounts()
         {
             try
             {
-                var result = await _adminService.GetAllConfirmedBookings();
+                var result = await _adminService.GetAllDataCounts();
                 return Ok(result);
             }
             catch (CustomException ex)
@@ -35,31 +35,13 @@ namespace TickSyncAPI.Controllers
                 return StatusCode(500, "An unexpected error occurred: " + ex.Message);
             }
         }
-
-        [HttpGet("getAllShows")]
-        public async Task<IActionResult> GetAllShows()
+        
+        [HttpGet("getEntityData/{entity}")]
+        public async Task<IActionResult> GetEntityData(string entity)
         {
             try
             {
-                var result = await _adminService.GetAllShows();
-                return Ok(result);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
-        }
-
-        [HttpGet("getAllPayments")]
-        public async Task<IActionResult> GetAllPayments()
-        {
-            try
-            {
-                var result = await _adminService.GetAllPayments();
+                var result = await _adminService.GetEntityData(entity);
                 return Ok(result);
             }
             catch (CustomException ex)
