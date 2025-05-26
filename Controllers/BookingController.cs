@@ -73,48 +73,12 @@ namespace TickSyncAPI.Controllers
             }
         }
 
-        //[HttpPost("confirmBooking")]
-        //public async Task<ActionResult> ConfirmBooking([FromBody] ConfirmBookingRequest request)
-        //{
-        //    try
-        //    {
-        //        var result = await _bookingService.ConfirmBooking(request);
-        //        return Ok(result);
-        //    }
-        //    catch (CustomException ex)
-        //    {
-        //        return StatusCode(ex.StatusCode, ex.Message);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-        //    }
-        //}
-
         [HttpPost("cancelBooking")]
         public async Task<ActionResult> CancelBooking([FromBody] CancelBookingRequest request)
         {
             try
             {
                 var result = await _bookingService.CancelBooking(request);
-                return Ok(result);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
-        }
-
-        [HttpPost("getUserBooking/{userId}")]
-        public async Task<ActionResult> GetUserBooking(int userId)
-        {
-            try
-            {
-                var result = await _bookingService.GetUserBookings(userId);
                 return Ok(result);
             }
             catch (CustomException ex)
@@ -169,6 +133,24 @@ namespace TickSyncAPI.Controllers
             try
             {
                 var result = await _bookingService.GetUserBookingHistory(userId);
+                return Ok(result);
+            }
+            catch (CustomException ex)
+            {
+                return StatusCode(ex.StatusCode, ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
+            }
+        }
+
+        [HttpGet("getBookingData/{bookingId}")]
+        public async Task<ActionResult> GetUserBooking(int bookingId)
+        {
+            try
+            {
+                var result = await _bookingService.GetUserBookingData(bookingId);
                 return Ok(result);
             }
             catch (CustomException ex)

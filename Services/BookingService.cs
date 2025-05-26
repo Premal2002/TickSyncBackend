@@ -270,43 +270,6 @@ namespace TickSyncAPI.Services
             };
         }
 
-        //public async Task<ConfirmBookingResponse> ConfirmBooking(ConfirmBookingRequest request)
-        //{
-        //    var booking = await _context.Bookings
-        //        .Include(b => b.BookingSeats)
-        //        .FirstOrDefaultAsync(b => b.BookingId == request.BookingId);
-
-        //    if (booking == null)
-        //        throw new CustomException(409, $"Booking not found.");
-
-        //    if (booking.Status == "Confirmed")
-        //        throw new CustomException(400, $"Booking is already confirmed.");
-
-        //    if (booking.Status == "Cancelled")
-        //        throw new CustomException(400, $"Booking is cancelled earlier.");
-
-        //    // Confirm booking
-        //    booking.Status = "Confirmed";
-        //    _context.Bookings.Update(booking);
-
-        //    var seatIds = booking.BookingSeats.Select(bs => bs.SeatId).ToList();
-
-        //    // Remove seat locks from memory cache
-        //    foreach (var seatId in seatIds)
-        //    {
-        //        var cacheKey = $"seat_lock:{booking.ShowId}:{seatId}";
-        //        _memoryCache.Remove(cacheKey);
-        //    }
-
-        //    await _context.SaveChangesAsync();
-
-        //    return new ConfirmBookingResponse
-        //    {
-        //        BookingId = booking.BookingId,
-        //        Status = booking.Status
-        //    };
-        //}
-
         public async Task<bool> CancelBooking(CancelBookingRequest request)
         {
             var booking = await _context.Bookings
@@ -339,27 +302,6 @@ namespace TickSyncAPI.Services
                 seatIds = seatIds
             }));
             return true;
-        }
-
-        public async Task<List<UserBookingsResponse>> GetUserBookings(int userId)
-        {
-            var userBookings = await _context.Bookings
-                    .Where(b => b.UserId == userId && b.Status != "Cancelled")
-                    .Join(
-                        _context.Shows,
-                        booking => booking.ShowId,
-                        show => show.ShowId,
-                        (booking, show) => new UserBookingsResponse
-                        {
-                            BookingId = booking.BookingId,
-                            Status = booking.Status,
-                            TotalAmount = booking.TotalAmount,
-                            ShowTime = show.ShowTime
-                        }
-                    )
-                    .ToListAsync();
-
-            return userBookings;
         }
 
         public async Task<CreateOrderResponse> CreateRazorpayOrder(CreateOrderRequest request)
@@ -496,6 +438,41 @@ namespace TickSyncAPI.Services
             .ToListAsync();
 
             return bookings;
+        }
+
+        public async Task<BookingHistoryDto> GetUserBookingData(int bookingId)
+        {
+            var booking = await _context.Bookings
+            .Where(b => b.BookingId == bookingId && b.Status == "Confirmed")
+            .Include(b => b.Show)
+                .ThenInclude(s => s.Movie)
+            .Include(b => b.Show)
+                .ThenInclude(s => s.Venue)
+            .Include(b => b.BookingSeats)
+                .ThenInclude(bs => bs.Seat)
+            .OrderByDescending(b => b.CreatedAt)
+            .Select(b => new BookingHistoryDto
+            {
+                BookingId = b.BookingId,
+                ReferenceId = b.ReferenceId,
+                MovieName = b.Show!.Movie.Title,
+                MoviePosterUrl = b.Show!.Movie.PosterUrl,
+                VenueName = b.Show.Venue.Name,
+                VenueLocation = b.Show.Venue.Location ?? "",
+                ShowDate = b.Show.ShowDate,
+                ShowTime = b.Show.ShowTime,
+                TotalAmount = b.TotalAmount,
+                Status = b.Status,
+                CreatedAt = b.CreatedAt,
+                Seats = b.BookingSeats.Select(bs => new SeatDto
+                {
+                    RowNumber = bs.Seat.RowNumber,
+                    SeatNumber = bs.Seat.SeatNumber,
+                    SeatType = bs.Seat.SeatType
+                }).ToList()
+            }).SingleOrDefaultAsync();
+
+            return booking;
         }
     }
 }
