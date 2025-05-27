@@ -16,6 +16,7 @@ namespace TickSyncAPI.Interfaces
         public Task<IEnumerable<Movie>> GetRecommendedMovies();
         public Task<IEnumerable<Movie>> GetRelatedMovies(int movieId);
         public Task<IEnumerable<ShowVenueGroup>> GetMovieShows(int movieId);
+        public Task<int> SearchMovie(string query);
 
     }
 }

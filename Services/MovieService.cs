@@ -155,6 +155,38 @@ namespace TickSyncAPI.Services
 
             return "Movie modified successfully";
         }
+
+        public async Task<int> SearchMovie(string query)
+        {
+            if (string.IsNullOrWhiteSpace(query))
+                throw new CustomException(400, "Your query is empty");
+
+            query = query.ToLower().Trim();
+
+            //Exact match (case-insensitive)
+            var exactMatch = await _context.Movies
+                .FirstOrDefaultAsync(m => m.Title.ToLower() == query);
+
+            if (exactMatch != null)
+                return exactMatch.MovieId;
+
+            //StartsWith match
+            var startsWithMatch = await _context.Movies
+                .FirstOrDefaultAsync(m => m.Title.ToLower().StartsWith(query));
+
+            if (startsWithMatch != null)
+                return startsWithMatch.MovieId;
+
+            //Contains match
+            var containsMatch = await _context.Movies
+                .OrderBy(m => m.Title.Length) // shorter matches are more relevant
+                .FirstOrDefaultAsync(m => m.Title.ToLower().Contains(query));
+            if(containsMatch != null) 
+                return containsMatch.MovieId;
+
+            return 0;
+        }
+
         private bool MovieExists(int id)
         {
             return _context.Movies.Any(e => e.MovieId == id);

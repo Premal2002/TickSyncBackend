@@ -23,33 +23,17 @@ namespace TickSyncAPI.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<User>>> GetUsers()
         {
-            try
-            {
-                var users = await _userService.GetUsers();
-                return Ok(users);
-            }
-            catch (Exception ex) 
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            } 
+            
+            var users = await _userService.GetUsers();
+            return Ok(users);
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(int id)
         {
-            try
-            {
-                return await _userService.GetUser(id);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            
+            return await _userService.GetUser(id);
         }
 
         // PUT: api/Users/5
@@ -57,19 +41,8 @@ namespace TickSyncAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int id, User user)
         {
-            try
-            {
-                var res = await _userService.PutUser(id,user);
-                return Ok(res);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var res = await _userService.PutUser(id,user);
+            return Ok(res);
         }
 
         // POST: api/Users
@@ -100,19 +73,8 @@ namespace TickSyncAPI.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
-            try
-            {
-                var res = await _userService.DeleteUser(id);
-                return Ok(res);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var res = await _userService.DeleteUser(id);
+            return Ok(res);
         }
 
     }
