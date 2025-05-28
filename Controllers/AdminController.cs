@@ -21,37 +21,15 @@ namespace TickSyncAPI.Controllers
         [HttpGet("getAllDataCounts")]
         public async Task<IActionResult> GetAllDataCounts()
         {
-            try
-            {
-                var result = await _adminService.GetAllDataCounts();
-                return Ok(result);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var result = await _adminService.GetAllDataCounts();
+            return Ok(result);
         }
         
         [HttpGet("getEntityData/{entity}")]
         public async Task<IActionResult> GetEntityData(string entity)
         {
-            try
-            {
-                var result = await _adminService.GetEntityData(entity);
-                return Ok(result);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var result = await _adminService.GetEntityData(entity);
+            return Ok(result);
         }
     }
 }

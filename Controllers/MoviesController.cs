@@ -29,160 +29,78 @@ namespace TickSyncAPI.Controllers
         [HttpPost("getMovies")]
         public async Task<ActionResult<object>> GetMovies([FromBody] MoviesFilter filter)
         {
-            try
-            {
-                var res = await _movieService.GetMovies(filter);
-                return Ok(res);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var res = await _movieService.GetMovies(filter);
+            return Ok(res);
         }
 
         // GET: api/Movies/Trending - based on popularity
         [HttpGet("Trending")]
         public async Task<ActionResult<IEnumerable<Movie>>> GetTrendingMovies()
         {
-            try
-            {
-                var res = await _movieService.GetTrendingMovies();
-                return Ok(res);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+           var res = await _movieService.GetTrendingMovies();
+           return Ok(res);
         }
 
         // GET: api/Movies/Trending - based on rating and release date
         [HttpGet("Recommended")]
         public async Task<ActionResult<IEnumerable<Movie>>> GetRecommendedMovies()
         {
-            try
-            {
-                var res = await _movieService.GetRecommendedMovies();
-                return Ok(res);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+           var res = await _movieService.GetRecommendedMovies();
+           return Ok(res);
         }
 
         // GET: api/Movies/getRelatedMovies - get related similar movies based on a movie
         [HttpPost("getRelatedMovies/{movieId}")]
         public async Task<ActionResult<IEnumerable<Movie>>> GetRelatedMovies(int movieId)
         {
-            try
-            {
-                var res = await _movieService.GetRelatedMovies(movieId);
-                return Ok(res);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var res = await _movieService.GetRelatedMovies(movieId);
+            return Ok(res);
         }
 
         // GET: api/Movies/getMovieShows/${movieId} - To get all the upcoming shows of a movie 
         [HttpGet("getMovieShows/{movieId}")]
         public async Task<ActionResult<IEnumerable<ShowVenueGroup>>> GetMovieShows(int movieId)
         {
-            try
-            {
-                var res = await _movieService.GetMovieShows(movieId);
-                return Ok(res);
-            }
-            catch(Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+           var res = await _movieService.GetMovieShows(movieId);
+           return Ok(res);
         }
 
         // GET: api/Movies/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Movie>> GetMovie(int id)
         {
-            try
-            {
-                var res = await _movieService.GetMovie(id);
-                return Ok(res);
-            }
-            catch(CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+           var res = await _movieService.GetMovie(id);
+           return Ok(res);
         }
 
         [HttpGet("TMDB/Movies")]
         public async Task<ActionResult> GetMovieTMDB()
         {
-            try
-            {
-                var result = await _tmdbService.GetMovieTMDB();
-                return Ok(result);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+           var result = await _tmdbService.GetMovieTMDB();
+           return Ok(result);
         }
 
         [HttpPost("sync-tmdb-movies")]
         public async Task<IActionResult> SyncTMDBMovies()
         {
-            try
-            {
-                var result = await _tmdbService.SyncTMDBMovies();
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+           var result = await _tmdbService.SyncTMDBMovies();
+           return Ok(result);
         }
 
         //To upadae movies table to add popularity column and values from TMDB 
         [HttpPost("update-tmdb-popularity")]
         public async Task<IActionResult> UpdateTMDBPopularity()
         {
-            try
-            {
-                var result = await _tmdbService.UpdateTMDBPopularity();
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var result = await _tmdbService.UpdateTMDBPopularity();
+            return Ok(result);
         }
 
         //to sync all the laguages in language table from tmdb language endpoint
         [HttpPost("sync-tmdb-languages")]
         public async Task<IActionResult> SyncTMDBLanguages()
         {
-            try
-            {
-                var result = await _tmdbService.SyncTMDBLanguages();
-                return Ok(result);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var result = await _tmdbService.SyncTMDBLanguages();
+            return Ok(result);
         }
 
 
@@ -191,19 +109,8 @@ namespace TickSyncAPI.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutMovie(int id, Movie movie)
         {
-            try
-            {
-                var res = await _movieService.PutMovie(id,movie);
-                return Ok(res);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var res = await _movieService.PutMovie(id,movie);
+            return Ok(res);
         }
 
         // POST: api/Movies
@@ -211,34 +118,24 @@ namespace TickSyncAPI.Controllers
         [HttpPost]
         public async Task<ActionResult<Movie>> PostMovie(Movie movie)
         {
-            try
-            {
-                var res = await _movieService.PostMovie(movie);
-                return Ok(res);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var res = await _movieService.PostMovie(movie);
+            return Ok(res);
         }
 
         // DELETE: api/Movies/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteMovie(int id)
         {
-            try
-            {
-                var res = await _movieService.DeleteMovie(id);
-                return Ok(res);
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var res = await _movieService.DeleteMovie(id);
+            return Ok(res);
+        }
+        
+        // search movie
+        [HttpGet("searchMovie/{query}")]
+        public async Task<IActionResult> SearchMovie(string query)
+        {
+            var res = await _movieService.SearchMovie(query);
+            return Ok(res);
         }
     }
 }

@@ -80,6 +80,8 @@ app.UseWebSockets();
 
 app.UseMiddleware<WebSocketMiddleware>();
 
+app.UseMiddleware<ExceptionMiddleware>();
+
 //use CORS
 app.UseCors("AllowAll");
 

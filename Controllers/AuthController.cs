@@ -20,92 +20,43 @@ namespace TickSyncAPI.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<string>> Login(UserLoginDto user)
         {
-            try
-            {
-                var token = await _authService.LoginUser(user);
-                return Ok(token);
-            }catch(Exception ex)
-            {
-                return Unauthorized(ex.Message);
-            }
+            var token = await _authService.LoginUser(user);
+            return Ok(token);
         }
 
         [HttpPost("assignRole")]
         public ActionResult<bool> AssignRoleToUser([FromBody] AddUserRole userRole)
         {
-            try
-            {
-                var addedUserRole = _authService.AssignRoleToUser(userRole);
-                return Ok(addedUserRole);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            var addedUserRole = _authService.AssignRoleToUser(userRole);
+            return Ok(addedUserRole);
         }
 
         [HttpPost("addRole")]
         public ActionResult<Role>  AddRole([FromBody] Role role)
         {
-            try
-            {
-                var addedRole = _authService.AddRole(role);
-                return Ok(addedRole);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            var addedRole = _authService.AddRole(role);
+            return Ok(addedRole);
         }
 
         [HttpPost("forgot-password")]
         public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request)
         {
-            try
-            {
-                var res = await _authService.ForgotPassword(request);
-                return Ok(res);
-            }
-            catch (Exception ex) 
-            {
-                return StatusCode(500, ex.Message);
-            }   
+            var res = await _authService.ForgotPassword(request);
+            return Ok(res);   
         }
 
         [HttpPost("verify-reset-code")]
         public async Task<IActionResult> VerifyResetCode([FromBody] VerifyResetCodeRequest request)
         {
-            try
-            {
-                var isVerifiedCode = await _authService.VerifyResetCode(request);
-                return Ok(new { verified = true });
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var isVerifiedCode = await _authService.VerifyResetCode(request);
+            return Ok(new { verified = true });
         }
 
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            try
-            {
-                var res = await _authService.ResetPassword(request);
-                return Ok(new { message = res });
-            }
-            catch (CustomException ex)
-            {
-                return StatusCode(ex.StatusCode, ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "An unexpected error occurred: " + ex.Message);
-            }
+            var res = await _authService.ResetPassword(request);
+            return Ok(new { message = res });
         }
     }
 }
