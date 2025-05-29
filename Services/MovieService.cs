@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Routing.Matching;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using TickSyncAPI.Dtos.Movies;
 using TickSyncAPI.Dtos.Seat;
@@ -162,29 +163,75 @@ namespace TickSyncAPI.Services
                 throw new CustomException(400, "Your query is empty");
 
             query = query.ToLower().Trim();
+            var allMovies = await _context.Movies.ToListAsync();
 
             //Exact match (case-insensitive)
-            var exactMatch = await _context.Movies
-                .FirstOrDefaultAsync(m => m.Title.ToLower() == query);
+            var exactMatch = allMovies
+                .FirstOrDefault(m => m.Title.ToLower() == query);
 
             if (exactMatch != null)
                 return exactMatch.MovieId;
 
             //StartsWith match
-            var startsWithMatch = await _context.Movies
-                .FirstOrDefaultAsync(m => m.Title.ToLower().StartsWith(query));
+            var startsWithMatch = allMovies
+                .FirstOrDefault(m => m.Title.ToLower().StartsWith(query));
 
             if (startsWithMatch != null)
                 return startsWithMatch.MovieId;
 
             //Contains match
-            var containsMatch = await _context.Movies
+            var containsMatch = allMovies
                 .OrderBy(m => m.Title.Length) // shorter matches are more relevant
-                .FirstOrDefaultAsync(m => m.Title.ToLower().Contains(query));
-            if(containsMatch != null) 
+                .FirstOrDefault(m => m.Title.ToLower().Contains(query));
+            if(containsMatch != null)
                 return containsMatch.MovieId;
 
+
+            // Find closest match using Levenshtein distance
+            int minDistance = int.MaxValue;
+            int bestMatchId = 0;
+
+            foreach (var candidate in allMovies)
+            {
+                int distance = LevenshteinDistance(candidate.Title.ToLower(), query);
+                if (distance < minDistance && distance < 5)
+                {
+                    minDistance = distance;
+                    bestMatchId = candidate.MovieId;
+                }
+            }
+
+            if(bestMatchId != 0)
+                return bestMatchId;
+
             return 0;
+        }
+
+        private int LevenshteinDistance(string a, string b)
+        {
+            int[,] dp = new int[a.Length + 1, b.Length + 1];
+
+            for (int i = 0; i <= a.Length; i++)
+                dp[i, 0] = i;
+
+            for (int j = 0; j <= b.Length; j++)
+                dp[0, j] = j;
+
+            for (int i = 1; i <= a.Length; i++)
+            {
+                for (int j = 1; j <= b.Length; j++)
+                {
+                    int cost = (a[i - 1] == b[j - 1]) ? 0 : 1;
+
+                    dp[i, j] = Math.Min(
+                        Math.Min(dp[i - 1, j] + 1,     // Deletion
+                                 dp[i, j - 1] + 1),    // Insertion
+                        dp[i - 1, j - 1] + cost        // Substitution
+                    );
+                }
+            }
+
+            return dp[a.Length, b.Length];
         }
 
         private bool MovieExists(int id)

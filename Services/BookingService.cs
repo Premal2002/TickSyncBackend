@@ -18,13 +18,15 @@ namespace TickSyncAPI.Services
         private readonly IMemoryCache _memoryCache;
         private readonly IConfiguration _configuration;
         private readonly HelperClasses.WebSocketManager _webSocketManager;
+        private readonly IEmailService _emailService;
 
-        public BookingService(BookingSystemContext context, IMemoryCache memoryCache, IConfiguration configuration, HelperClasses.WebSocketManager webSocketManager)
+        public BookingService(BookingSystemContext context, IMemoryCache memoryCache, IConfiguration configuration, HelperClasses.WebSocketManager webSocketManager, IEmailService emailService)
         {
             _context = context;
             _memoryCache = memoryCache;
             _configuration = configuration;
             _webSocketManager = webSocketManager;
+            _emailService = emailService;
         }
 
         public async Task<ShowSeatLayoutDto> GetLatestSeatsLayout(int showId)
@@ -401,6 +403,53 @@ namespace TickSyncAPI.Services
                 status = "Booked",
                 seatIds = booking.BookingSeats.Select(s => s.SeatId).ToList()
             }));
+
+            var user = await _context.Users.SingleOrDefaultAsync(u => u.UserId == booking.UserId);
+            var show = await _context.Shows.Include(s => s.Movie).Include(s => s.Venue).Select(s => new
+            {
+                ShowId = s.ShowId,
+                MovieName = s.Movie.Title,
+                VenueName = s.Venue.Name,
+                ShowDate = s.ShowDate,
+                ShowTime = s.ShowTime
+            }).SingleOrDefaultAsync(s => s.ShowId == booking.ShowId);
+
+            var seatIds = booking.BookingSeats.Select(bs => bs.SeatId).ToList();
+            var groupedSeats = await _context.Seats.Where(s => seatIds.Contains(s.SeatId))
+                                .GroupBy(seat => seat.RowNumber)
+                                .ToDictionaryAsync(
+                                    g => g.Key,
+                                    g => g.Select(seat => seat.SeatNumber).ToList()
+                                );
+
+            string seatHtml = "<ul>";
+            foreach (var row in groupedSeats)
+            {
+                seatHtml += $"<li><strong>Row {row.Key}:</strong> {string.Join(", ", row.Value)}</li>";
+            }
+            seatHtml += "</ul>";
+
+            string subject = "🎟️ Your Ticket is Confirmed - TickSync Booking Details";
+            string body = $@"
+                            <html>
+                                <body style='font-family: Arial, sans-serif;'>
+                                    <p>Dear Customer,</p>
+                                    <p>Thank you for your booking. Your ticket has been successfully confirmed for Movie : {show.MovieName}!</p>
+                                    <h3 style='color:#2e6c80;'>Booking Details</h3>
+                                    <ul>
+                                        <li><strong>Venue & Show :</strong> {show.VenueName} | {show.ShowDate} : {show.ShowTime}</li>
+                                        <li><strong>Booking ID:</strong> {booking.BookingId}</li>
+                                        <li><strong>Total Amount:</strong> ₹{booking.TotalAmount}</li>
+                                        <li><strong>Payment ID:</strong> {request.RazorpayPaymentId}</li>
+                                    </ul>
+                                    <h4 style='color:#2e6c80;'>Your Seats:</h4>
+                                    {seatHtml}
+                                    <p>Please show this email at the venue for entry.</p>
+                                    <br/>
+                                    <p>Enjoy your show!<br/>TickSync Team</p>
+                                </body>
+                            </html>";
+            _emailService.SendEmail(user.Email, subject, body);
             return "Booking confirmed successfully.";
         }
 

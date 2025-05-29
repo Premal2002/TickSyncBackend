@@ -5,6 +5,7 @@ using TickSyncAPI.HelperClasses;
 using TickSyncAPI.Interfaces;
 using TickSyncAPI.Dtos.Booking;
 using Microsoft.AspNetCore.Authorization;
+using TickSyncAPI.Services;
 
 namespace TickSyncAPI.Controllers
 {
@@ -74,5 +75,6 @@ namespace TickSyncAPI.Controllers
             var result = await _bookingService.GetUserBookingData(bookingId);
             return Ok(result);
         }
+
     }
 }
